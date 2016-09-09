@@ -82,6 +82,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             message = cleanSMS(message);
                             ArrayList<Bus> busesToDraw = getBuses(message);
 
+                            // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
+                            // each successive text will wipe out previous texts. This is currently working under the assumption
+                            // that all information comes in one text.
+                            // If there are new buses, wipe the old ones from the map
+                            if (busesToDraw.size() != 0) {
+                               mMap.clear();
+                            }
                             for (Bus bus : busesToDraw) {
                                 Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
                                 ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
