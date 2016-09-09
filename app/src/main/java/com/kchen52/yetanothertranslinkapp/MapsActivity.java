@@ -28,7 +28,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private BroadcastReceiver smsReceiver;
 
-    private final String NUMBER_TO_RESPOND_TO = "7786554235";
+    private final String NUMBER_TO_RESPOND_TO = "+17786554235";
     private final boolean TWILIO_TRIAL_ACCOUNT = true;
 
     @Override
@@ -73,28 +73,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 if (bundle != null) {
                     final Object[] pdusObj = (Object[]) bundle.get("pdus");
+
+                    // Required because the following for loop doesn't go through the entire thing at once
+                    StringBuilder entireSMS = new StringBuilder();
                     for (int i = 0; i < pdusObj.length; i++) {
                         SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
                         String phoneNumber = currentMessage.getDisplayOriginatingAddress();
-                        String message = currentMessage.getDisplayMessageBody();
+                        //Toast.makeText(context, "Number: " + phoneNumber, Toast.LENGTH_LONG).show();
                         if (phoneNumber.equals(NUMBER_TO_RESPOND_TO)) {
-                            // Then we do our parsing shit
-                            message = cleanSMS(message);
-                            ArrayList<Bus> busesToDraw = getBuses(message);
-
-                            // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
-                            // each successive text will wipe out previous texts. This is currently working under the assumption
-                            // that all information comes in one text.
-                            // If there are new buses, wipe the old ones from the map
-                            if (busesToDraw.size() != 0) {
-                               mMap.clear();
-                            }
-                            for (Bus bus : busesToDraw) {
-                                Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
-                                ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
-                                addMarker(bus);
-                            }
+                            String message = currentMessage.getDisplayMessageBody();
+                            entireSMS.append(message);
                         }
+                    }
+                    // Parse the information, and store it as Bus objects
+                    ArrayList<Bus> busesToDraw = getBuses(entireSMS.toString());
+
+                    // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
+                    // each successive text will wipe out previous texts. This is currently working under the assumption
+                    // that all information comes in one text.
+                    // If there are new buses, wipe the old ones from the map
+                    if (busesToDraw.size() != 0) {
+                       mMap.clear();
+                    }
+                    for (Bus bus : busesToDraw) {
+                        Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
+                                ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
+                        addMarker(bus);
                     }
                 }
             } catch (Exception e) {
