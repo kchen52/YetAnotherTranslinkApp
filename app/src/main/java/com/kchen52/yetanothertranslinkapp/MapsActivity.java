@@ -8,8 +8,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.view.Menu;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -28,8 +31,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleMap mMap;
     private BroadcastReceiver smsReceiver;
 
-    private final String NUMBER_TO_RESPOND_TO = "+17786554235";
-    private final boolean TWILIO_TRIAL_ACCOUNT = true;
+    private final String TWILIO_NUMBER = "+17786554235";
+
+    private String busesRequested = "320";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +59,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
         LatLng defaultMapLocation = new LatLng(49.118641, -122.747700);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultMapLocation));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultMapLocation, 12.0f));
@@ -80,7 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
                         String phoneNumber = currentMessage.getDisplayOriginatingAddress();
                         //Toast.makeText(context, "Number: " + phoneNumber, Toast.LENGTH_LONG).show();
-                        if (phoneNumber.equals(NUMBER_TO_RESPOND_TO)) {
+                        if (phoneNumber.equals(TWILIO_NUMBER)) {
                             String message = currentMessage.getDisplayMessageBody();
                             entireSMS.append(message);
                         }
@@ -110,6 +113,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void addMarker(Bus bus) {
         LatLng busLocation = new LatLng(bus.getLatitude(), bus.getLongitude());
         mMap.addMarker(new MarkerOptions().position(busLocation).title(bus.getDestination() + ":" + bus.getVehicleNumber()));
+    }
+
+    public void requestInformation(View view) {
+        String formattedRequest = "Request: " + busesRequested;
+        sendSMS(TWILIO_NUMBER, formattedRequest);
+    }
+
+    private void sendSMS(String phoneNumber, String msg) {
+        try {
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(phoneNumber, null, msg, null, null);
+            Toast.makeText(getApplicationContext(), "\"" + msg  + "\" sent.", Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), e.getMessage().toString(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
     }
 
     private ArrayList<Bus> getBuses(String input) {
@@ -142,15 +161,5 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
         return listOfBuses;
-    }
-
-    private String cleanSMS(String incomingSMS) {
-        // First, get rid of the Twilio prepended msg if this is a trial account
-        String twilioTrialMessage = "Sent from your Twilio trial account - ";
-        if (TWILIO_TRIAL_ACCOUNT) {
-            return incomingSMS.split(twilioTrialMessage)[1];
-        } else {
-            return incomingSMS;
-        }
     }
 }
