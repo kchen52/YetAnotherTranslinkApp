@@ -1,9 +1,12 @@
 package com.kchen52.yetanothertranslinkapp;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
+import android.net.Uri;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.widget.TextViewCompat;
@@ -103,6 +106,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         smsFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         smsReceiver = new SMSReceiver();
         registerReceiver(smsReceiver, smsFilter);
+
+        // Read from the inbox and show the results from the last relevant text received if it exists
+        String lastText = getLastYATAText();
+        if (!lastText.equals("")) {
+            // Provided it's not empty, parse the message, draw buses, and update last updated time
+            String unreadableDate = lastText.split("\\{")[0];
+            String bodyOfText = lastText.split("\\{")[1];
+            // Just to get rid of that last "}"
+            bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
+            Date date = new Date(Long.parseLong(unreadableDate));
+            parseInfoAndDrawBuses(bodyOfText);
+            updateTime(date);
+        }
+    }
+
+    // Reads the inbox for the last message sent from the server if it exists
+    private String getLastYATAText() {
+        String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
+        Cursor cursor = getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'"+TWILIO_NUMBER+"\'", null, "date desc limit 1");
+
+        StringBuilder builder = new StringBuilder();
+        if (cursor.moveToFirst()) {
+            int indexBody = cursor.getColumnIndex("body");
+            int indexDate = cursor.getColumnIndex("date");
+            builder.append(cursor.getString(indexDate));
+            builder.append("{");
+            builder.append(cursor.getString(indexBody));
+            builder.append("}");
+        }
+
+        if (!cursor.isClosed()) { cursor.close(); }
+        return builder.toString();
     }
 
     private class SMSReceiver extends BroadcastReceiver {
@@ -124,31 +159,36 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             entireSMS.append(message);
                         }
                     }
-                    // Parse the information, and store it as Bus objects
-                    ArrayList<Bus> busesToDraw = getBuses(entireSMS.toString());
-
-                    // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
-                    // each successive text will wipe out previous texts. This is currently working under the assumption
-                    // that all information comes in one text.
-                    // If there are new buses, wipe the old ones from the map
-                    if (busesToDraw.size() != 0) {
-                       mMap.clear();
-                    }
-                    for (Bus bus : busesToDraw) {
-                        Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
-                                ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
-                        addMarker(bus);
-                    }
-
-                    // Update requested time
-                    Date date = new Date();
-                    lastRequestedTime = dateFormat.format(date);
-                    TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
-                    lastRequestedTime_TextView.setText("Last updated: " + lastRequestedTime);
+                    parseInfoAndDrawBuses(entireSMS.toString());
+                    updateTime(new Date());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void updateTime(Date currentTime) {
+        lastRequestedTime = dateFormat.format(currentTime);
+        TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
+        lastRequestedTime_TextView.setText(R.string.last_updated_preamble + lastRequestedTime);
+    }
+
+    private void parseInfoAndDrawBuses(String info) {
+        // Parse the information, and store it as Bus objects
+        ArrayList<Bus> busesToDraw = getBuses(info);
+
+        // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
+        // each successive text will wipe out previous texts. This is currently working under the assumption
+        // that all information comes in one text.
+        // If there are new buses, wipe the old ones from the map
+        if (busesToDraw.size() != 0) {
+            mMap.clear();
+        }
+        for (Bus bus : busesToDraw) {
+            Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
+                    ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
+            addMarker(bus);
         }
     }
 
