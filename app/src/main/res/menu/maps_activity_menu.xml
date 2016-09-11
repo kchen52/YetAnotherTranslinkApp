@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/bus_list"
-        android:title="Bus List" />
-    <item android:id="@+id/refresh_view"
-        android:title="Refresh View" />
+        android:title="@string/menu_bus_list" />
+    <item android:id="@+id/refresh"
+        android:title="@string/menu_refresh" />
+    <item android:id="@+id/settings"
+        android:title="@string/menu_settings" />
 
 </menu>
