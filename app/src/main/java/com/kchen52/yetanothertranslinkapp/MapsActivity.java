@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.widget.TextViewCompat;
@@ -70,10 +71,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.bus_list:
-                Toast.makeText(getApplicationContext(), "bus list", Toast.LENGTH_LONG).show();
+                Intent busListIntent = new Intent(this, BusListActivity.class);
+                startActivity(busListIntent);
                 return true;
             case R.id.refresh:
-                Toast.makeText(getApplicationContext(), "refresh", Toast.LENGTH_LONG).show();
+                requestInformation();
                 return true;
             case R.id.settings:
                 Toast.makeText(getApplicationContext(), "settings", Toast.LENGTH_LONG).show();
@@ -201,6 +203,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void requestInformation(View view) {
+        // Not quite true, but I'm not quite familiar with snackbars yet, so i'll just make this work for now
+        Snackbar.make(view, "Information request sent.", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+        requestInformation();
+    }
+    public void requestInformation() {
         String formattedRequest = "Request: " + busesRequested;
         sendSMS(TWILIO_NUMBER, formattedRequest);
     }
@@ -209,9 +217,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(phoneNumber, null, msg, null, null);
-            Toast.makeText(getApplicationContext(), "\"" + msg  + "\" sent.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
