@@ -204,7 +204,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void requestInformation(View view) {
         // Not quite true, but I'm not quite familiar with snackbars yet, so i'll just make this work for now
-        Snackbar.make(view, "Information request sent.", Snackbar.LENGTH_LONG)
+        Snackbar.make(view, "Information request sent.", Snackbar.LENGTH_SHORT)
                 .setAction("Action", null).show();
         requestInformation();
     }
