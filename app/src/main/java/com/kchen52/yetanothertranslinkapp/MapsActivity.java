@@ -171,7 +171,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void updateTime(Date currentTime) {
         lastRequestedTime = dateFormat.format(currentTime);
         TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
-        lastRequestedTime_TextView.setText(R.string.last_updated_preamble + lastRequestedTime);
+        String formattedTime = String.format(getResources().getString(R.string.last_updated_preamble), lastRequestedTime);
+        lastRequestedTime_TextView.setText(formattedTime);
     }
 
     private void parseInfoAndDrawBuses(String info) {
