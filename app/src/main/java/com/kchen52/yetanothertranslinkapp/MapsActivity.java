@@ -1,16 +1,14 @@
 package com.kchen52.yetanothertranslinkapp;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
@@ -41,10 +39,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
     private BroadcastReceiver smsReceiver;
+    private SharedPreferences sharedPref;
 
-    private final String TWILIO_NUMBER = "+17786554235";
-
-    private String busesRequested = "320";
+    private String TWILIO_NUMBER;
+    private String busesRequested;
 
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
@@ -58,6 +56,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // Note: calling this code in onStart so changes made to the sharedpreferences in the settings or bus list screen are
+        // immediately applied once coming back to the maps activity. onStart is also called after onCreate, so this also covers
+        // that case lol
+        // Read from SharedPreferences, and update TWILIO_NUMBER and busesRequested
+        sharedPref = getApplicationContext().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        TWILIO_NUMBER = sharedPref.getString(getString(R.string.saved_twilio_number), getString(R.string.saved_twilio_number_default));
+        busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
     }
 
     @Override
@@ -83,16 +93,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
@@ -203,9 +203,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Not quite true, but I'm not quite familiar with snackbars yet, so i'll just make this work for now
         Snackbar.make(view, "Information request sent.", Snackbar.LENGTH_SHORT)
                 .setAction("Action", null).show();
-        requestInformation();
-    }
-    public void requestInformation() {
         String formattedRequest = "Request: " + busesRequested;
         sendSMS(TWILIO_NUMBER, formattedRequest);
     }
