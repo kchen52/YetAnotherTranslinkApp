@@ -6,23 +6,30 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.widget.TextViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +41,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final String TWILIO_NUMBER = "+17786554235";
 
     private String busesRequested = "320";
+
+    // Used for formatting time/date for display
+    private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
+    private String lastRequestedTime = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +61,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.maps_activity_menu, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.bus_list:
+                Toast.makeText(getApplicationContext(), "bus list", Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.refresh:
+                Toast.makeText(getApplicationContext(), "refresh", Toast.LENGTH_LONG).show();
+                return true;
+            case R.id.settings:
+                Toast.makeText(getApplicationContext(), "settings", Toast.LENGTH_LONG).show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
     }
 
 
@@ -110,6 +139,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
                         addMarker(bus);
                     }
+
+                    // Update requested time
+                    Date date = new Date();
+                    lastRequestedTime = dateFormat.format(date);
+                    TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
+                    lastRequestedTime_TextView.setText("Last updated: " + lastRequestedTime);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -119,7 +154,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addMarker(Bus bus) {
         LatLng busLocation = new LatLng(bus.getLatitude(), bus.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(busLocation).title(bus.getDestination() + ":" + bus.getVehicleNumber()));
+        mMap.addMarker(new MarkerOptions().position(busLocation)
+                        .title(bus.getDestination() + ":" + bus.getVehicleNumber())
+                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));
     }
 
     public void requestInformation(View view) {
