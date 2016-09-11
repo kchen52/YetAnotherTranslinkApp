@@ -2,8 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/bus_list"
         android:title="@string/menu_bus_list" />
-    <item android:id="@+id/refresh"
-        android:title="@string/menu_refresh" />
     <item android:id="@+id/settings"
         android:title="@string/menu_settings" />
 

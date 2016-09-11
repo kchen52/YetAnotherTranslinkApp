@@ -74,9 +74,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 Intent busListIntent = new Intent(this, BusListActivity.class);
                 startActivity(busListIntent);
                 return true;
-            case R.id.refresh:
-                requestInformation();
-                return true;
             case R.id.settings:
                 Toast.makeText(getApplicationContext(), "settings", Toast.LENGTH_LONG).show();
                 return true;
