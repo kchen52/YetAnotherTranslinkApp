@@ -32,6 +32,7 @@ public class CustomAdapter extends ArrayAdapter<Model> {
 
         final TextView name = (TextView) convertView.findViewById(R.id.busRowTextView);
         final CheckBox cb = (CheckBox) convertView.findViewById(R.id.busRowCheckBox);
+
         cb.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
@@ -50,6 +51,7 @@ public class CustomAdapter extends ArrayAdapter<Model> {
                             savedBuses = savedBuses + ", " + busNumber;
                         }
 
+                        // And save changes into the sharedpreferences
                         SharedPreferences.Editor editor = sharedPref.edit();
                         editor.putString(context.getString(R.string.saved_buses_requested), savedBuses);
                         editor.commit();

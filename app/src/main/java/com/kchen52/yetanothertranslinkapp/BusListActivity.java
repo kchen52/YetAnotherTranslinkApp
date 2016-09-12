@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -34,6 +35,10 @@ public class BusListActivity extends AppCompatActivity {
 
         CustomAdapter adapter = new CustomAdapter(this, getBusListArray(busesRequested));
         listView.setAdapter(adapter);
+
+        TextView busesRequestedTextView = (TextView) findViewById(R.id.buses_requested_textview);
+        String formattedRequestedBuses = String.format(getResources().getString(R.string.buses_requested_preamble), busesRequested);
+        busesRequestedTextView.setText(formattedRequestedBuses);
     }
 
 

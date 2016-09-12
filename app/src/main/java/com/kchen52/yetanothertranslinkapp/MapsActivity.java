@@ -201,8 +201,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void requestInformation(View view) {
-        String formattedRequest = "Request: " + busesRequested;
-        sendSMS(TWILIO_NUMBER, formattedRequest);
 
         // Create a snackbar to let the user know what was requested, if at all
         if (busesRequested.equals("")) {
@@ -211,6 +209,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
+            String formattedRequest = "Request: " + busesRequested;
+            sendSMS(TWILIO_NUMBER, formattedRequest);
         }
 
     }
