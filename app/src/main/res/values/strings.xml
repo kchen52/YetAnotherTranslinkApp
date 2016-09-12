@@ -10,7 +10,6 @@
     <string name="title_activity_bus_list">BusListActivity</string>
 
     <!-- Shared Preferences stuff -->
-    <string name="preference_file_key">com.kchen52.YATA.PREFERENCE_FILE_KEY</string>
     <string name="saved_twilio_number">savedTwilioNumber</string>
     <string name="saved_buses_requested">savedBusesRequested</string>
     <string name="saved_twilio_number_default">+17786554235</string>

@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -56,6 +57,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
@@ -65,7 +67,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // immediately applied once coming back to the maps activity. onStart is also called after onCreate, so this also covers
         // that case lol
         // Read from SharedPreferences, and update TWILIO_NUMBER and busesRequested
-        sharedPref = getApplicationContext().getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         TWILIO_NUMBER = sharedPref.getString(getString(R.string.saved_twilio_number), getString(R.string.saved_twilio_number_default));
         busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
     }
@@ -200,11 +201,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void requestInformation(View view) {
-        // Not quite true, but I'm not quite familiar with snackbars yet, so i'll just make this work for now
-        Snackbar.make(view, "Information request sent.", Snackbar.LENGTH_SHORT)
-                .setAction("Action", null).show();
         String formattedRequest = "Request: " + busesRequested;
         sendSMS(TWILIO_NUMBER, formattedRequest);
+
+        // Create a snackbar to let the user know what was requested, if at all
+        if (busesRequested.equals("")) {
+            Snackbar.make(view, "No request was sent because no buses are selected.", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        } else {
+            Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+
     }
 
     private void sendSMS(String phoneNumber, String msg) {
