@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
@@ -28,7 +29,11 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.maps.android.kml.KmlLayer;
 
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -48,6 +53,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
     private String lastRequestedTime = "";
+
+    private ArrayList<KmlLayer> kmlLayers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +76,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Read from SharedPreferences, and update TWILIO_NUMBER and busesRequested
         TWILIO_NUMBER = sharedPref.getString(getString(R.string.saved_twilio_number), getString(R.string.saved_twilio_number_default));
         busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
+
+        // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
+        if (mMap != null) {
+            createRouteOverlays(busesRequested);
+        }
     }
 
     @Override
@@ -119,8 +131,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             parseInfoAndDrawBuses(bodyOfText);
             updateTime(date);
         }
+        createRouteOverlays(busesRequested);
     }
 
+    private void createRouteOverlays(String busesRequested) {
+        if (!busesRequested.equals("")) {
+            // Clear the previous layers
+            Log.i("OVERLAY_TEST", "size: " + kmlLayers.size());
+
+            for (KmlLayer kmlLayer : kmlLayers) {
+                Log.i("OVERLAY_TEST", "removeLayerFromMap()");
+                kmlLayer.removeLayerFromMap();
+            }
+            kmlLayers.clear();
+
+            // Then create new layers and draw them
+            for (String bus : busesRequested.split(", ")) {
+                KmlLayer kmlLayer = null;
+                try {
+                    int id = getResources().getIdentifier("raw/_" + bus, null, this.getPackageName());
+                    kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
+                    kmlLayer.addLayerToMap();
+                    kmlLayers.add(kmlLayer);
+                    Log.i("OVERLAY_TEST", "Just added a new layer for " + bus + ", size(): " + kmlLayers.size());
+                } catch (XmlPullParserException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+        }
+
+    }
     // Reads the inbox for the last message sent from the server if it exists
     private String getLastYATAText() {
         String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
@@ -196,8 +240,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void addMarker(Bus bus) {
         LatLng busLocation = new LatLng(bus.getLatitude(), bus.getLongitude());
         mMap.addMarker(new MarkerOptions().position(busLocation)
-                        .title(bus.getDestination() + ":" + bus.getVehicleNumber())
-                        .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));
+                .title(bus.getDestination() + ":" + bus.getVehicleNumber())
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));
     }
 
     public void requestInformation(View view) {

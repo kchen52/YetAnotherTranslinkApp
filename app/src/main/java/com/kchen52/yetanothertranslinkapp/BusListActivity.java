@@ -36,9 +36,9 @@ public class BusListActivity extends AppCompatActivity {
         CustomAdapter adapter = new CustomAdapter(this, getBusListArray(busesRequested));
         listView.setAdapter(adapter);
 
-        TextView busesRequestedTextView = (TextView) findViewById(R.id.buses_requested_textview);
+        /*TextView busesRequestedTextView = (TextView) findViewById(R.id.buses_requested_textview);
         String formattedRequestedBuses = String.format(getResources().getString(R.string.buses_requested_preamble), busesRequested);
-        busesRequestedTextView.setText(formattedRequestedBuses);
+        busesRequestedTextView.setText(formattedRequestedBuses);*/
     }
 
 
