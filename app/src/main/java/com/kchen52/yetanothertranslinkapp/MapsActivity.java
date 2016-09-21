@@ -28,6 +28,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.kml.KmlLayer;
 
@@ -55,6 +56,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String lastRequestedTime = "";
 
     private ArrayList<KmlLayer> kmlLayers = new ArrayList<>();
+    private ArrayList<Marker> markers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +80,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
 
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
+        Log.i("OVERLAY_TEST", "onStart() called.");
         if (mMap != null) {
             createRouteOverlays(busesRequested);
+        } else {
+            Log.i("OVERLAY_TEST", "Map is null lol");
         }
     }
 
@@ -137,10 +142,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void createRouteOverlays(String busesRequested) {
         if (!busesRequested.equals("")) {
             // Clear the previous layers
-            Log.i("OVERLAY_TEST", "size: " + kmlLayers.size());
-
             for (KmlLayer kmlLayer : kmlLayers) {
-                Log.i("OVERLAY_TEST", "removeLayerFromMap()");
                 kmlLayer.removeLayerFromMap();
             }
             kmlLayers.clear();
@@ -228,7 +230,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // that all information comes in one text.
         // If there are new buses, wipe the old ones from the map
         if (busesToDraw.size() != 0) {
-            mMap.clear();
+            for (Marker marker : markers) {
+                marker.remove();
+            }
+            markers.clear();
         }
         for (Bus bus : busesToDraw) {
             Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
@@ -239,9 +244,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void addMarker(Bus bus) {
         LatLng busLocation = new LatLng(bus.getLatitude(), bus.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(busLocation)
+        MarkerOptions temp = new MarkerOptions().position(busLocation)
+                .title(bus.getDestination()+  ": " + bus.getVehicleNumber())
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
+        /*mMap.addMarker(new MarkerOptions().position(busLocation)
                 .title(bus.getDestination() + ":" + bus.getVehicleNumber())
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));
+                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));*/
+        markers.add(mMap.addMarker(temp));
     }
 
     public void requestInformation(View view) {
