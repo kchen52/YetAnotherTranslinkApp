@@ -80,11 +80,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
 
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
-        Log.i("OVERLAY_TEST", "onStart() called.");
         if (mMap != null) {
             createRouteOverlays(busesRequested);
-        } else {
-            Log.i("OVERLAY_TEST", "Map is null lol");
         }
     }
 
@@ -103,7 +100,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 startActivity(busListIntent);
                 return true;
             case R.id.settings:
-                Toast.makeText(getApplicationContext(), "settings", Toast.LENGTH_LONG).show();
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -115,6 +113,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        // TODO: Dynamically set default gps location
         LatLng defaultMapLocation = new LatLng(49.118641, -122.747700);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultMapLocation));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultMapLocation, 12.0f));
