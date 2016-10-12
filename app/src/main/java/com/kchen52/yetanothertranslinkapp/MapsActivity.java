@@ -39,6 +39,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,7 +135,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Just to get rid of that last "}"
             bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
             Date date = new Date(Long.parseLong(unreadableDate));
-            parseInfoAndDrawBuses(bodyOfText);
+            busHandler.updateBuses(bodyOfText);
+            drawBuses(busHandler.getBuses());
             updateTime(date);
         }
         createRouteOverlays(busesRequested);
@@ -206,10 +208,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             entireSMS.append(message);
                         }
                     }
-                    parseInfoAndDrawBuses(entireSMS.toString());
                     updateTime(new Date());
 
                     busHandler.updateBuses(entireSMS.toString());
+                    drawBuses(busHandler.getBuses());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -224,21 +226,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         lastRequestedTime_TextView.setText(formattedTime);
     }
 
-    private void parseInfoAndDrawBuses(String info) {
-        // Parse the information, and store it as Bus objects
-        ArrayList<Bus> busesToDraw = getBuses(info);
-
-        // NOTE: If each bus information is sent in its own text (e.g., a text for 320, one for 099, etc.)
-        // each successive text will wipe out previous texts. This is currently working under the assumption
-        // that all information comes in one text.
+    private void drawBuses(LinkedList<Bus> buses) {
         // If there are new buses, wipe the old ones from the map
-        if (busesToDraw.size() != 0) {
+        if (buses.size() != 0) {
             for (Marker marker : markers) {
                 marker.remove();
             }
             markers.clear();
         }
-        for (Bus bus : busesToDraw) {
+        for (Bus bus : buses) {
             Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
                     ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
             addMarker(bus);
@@ -280,35 +276,4 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private ArrayList<Bus> getBuses(String input) {
-        // At this stage, input can look like
-        // GUILDFORD>8122:-122.842117,-122.842117|8123:-122.123456,123.123456|NEWTON EXCH>8123:122.80325,-122.80325|
-        // Currently, we want to split it by destination
-        // E.g, first match would return GUILDFORD>...
-        // and second match would return NEWTON EXCH>...
-        Pattern busPattern = Pattern.compile("([\\w\\s]*)>((\\d)+:-?(\\d)*\\.(\\d)+,-?(\\d)*\\.(\\d)+\\|)+");
-        Matcher matcher = busPattern.matcher(input);
-
-        ArrayList<Bus> listOfBuses = new ArrayList<>();
-        while (matcher.find()) {
-            String allBusInformation = matcher.group();
-            String destination = allBusInformation.split(">")[0];
-            String individualBusInformation = allBusInformation.split(">")[1];
-
-            // Now we're dealing with something like
-            // 8122:-122.842117,-122.842117|8123:-122.123456,123.123456|
-            // This time, we want to split it by bus vehicle number
-            // E.g., 8122:...
-            // 8123:...
-            Pattern individualBusPattern = Pattern.compile("(\\d)*:-?(\\d)*\\.(\\d)*,-?(\\d)*\\.(\\d)*");
-            Matcher individualMatcher = individualBusPattern.matcher(individualBusInformation);
-
-            while (individualMatcher.find()) {
-                Bus bus = new Bus();
-                bus.init(destination, individualMatcher.group());
-                listOfBuses.add(bus);
-            }
-        }
-        return listOfBuses;
-    }
 }
