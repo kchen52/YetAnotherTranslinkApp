@@ -58,6 +58,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<KmlLayer> kmlLayers = new ArrayList<>();
     private ArrayList<Marker> markers = new ArrayList<>();
 
+    private BusHandler busHandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +68,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        busHandler = new BusHandler();
     }
 
     @Override
@@ -206,6 +208,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     parseInfoAndDrawBuses(entireSMS.toString());
                     updateTime(new Date());
+
+                    busHandler.updateBuses(entireSMS.toString());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
