@@ -113,7 +113,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         smsReceiver = new SMSReceiver();
         registerReceiver(smsReceiver, smsFilter);
 
-        busHandler.updateWithLastText();
+        busHandler.updateWithLastText(requestHandler.getTwilioNumber());
         drawBuses(busHandler.getBuses());
         updateDisplayedTime(busHandler.getLastUpdatedTime());
 

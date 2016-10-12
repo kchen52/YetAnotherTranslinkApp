@@ -64,8 +64,8 @@ public class BusHandler {
         return lastUpdatedTime;
     }
 
-    public void updateWithLastText() {
-        String lastText = readLastYATAText();
+    public void updateWithLastText(String twilioNumber) {
+        String lastText = readLastYATAText(twilioNumber);
         if (!lastText.equals("")) {
             // Provided it's not empty, parse the message, draw buses, and update last updated time
             String unreadableDate = lastText.split("\\{")[0];
@@ -77,11 +77,11 @@ public class BusHandler {
         }
     }
 
-    private String readLastYATAText() {
+    private String readLastYATAText(String twilioNumber) {
         // Reads the inbox for the last message sent from the server if it exists
         String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
         //Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'"+TWILIO_NUMBER+"\'", null, "date desc limit 1");
-        Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'+17786554235\'", null, "date desc limit 1");
+        Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'" + twilioNumber + "\'", null, "date desc limit 1");
 
         StringBuilder builder = new StringBuilder();
         if (cursor.moveToFirst()) {
