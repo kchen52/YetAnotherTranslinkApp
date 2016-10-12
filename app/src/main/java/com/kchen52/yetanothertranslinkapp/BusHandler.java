@@ -3,7 +3,6 @@ package com.kchen52.yetanothertranslinkapp;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 import java.util.Date;
 import java.util.LinkedList;
