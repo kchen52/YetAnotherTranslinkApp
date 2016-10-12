@@ -69,7 +69,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        busHandler = new BusHandler();
+        busHandler = new BusHandler(getApplicationContext());
     }
 
     @Override
@@ -126,19 +126,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         smsReceiver = new SMSReceiver();
         registerReceiver(smsReceiver, smsFilter);
 
-        // Read from the inbox and show the results from the last relevant text received if it exists
-        String lastText = getLastYATAText();
-        if (!lastText.equals("")) {
-            // Provided it's not empty, parse the message, draw buses, and update last updated time
-            String unreadableDate = lastText.split("\\{")[0];
-            String bodyOfText = lastText.split("\\{")[1];
-            // Just to get rid of that last "}"
-            bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
-            Date date = new Date(Long.parseLong(unreadableDate));
-            busHandler.updateBuses(bodyOfText);
-            drawBuses(busHandler.getBuses());
-            updateTime(date);
-        }
+        busHandler.updateWithLastText();
+        drawBuses(busHandler.getBuses());
+        updateTime(busHandler.getLastUpdatedTime());
+
         createRouteOverlays(busesRequested);
     }
 
@@ -152,7 +143,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Then create new layers and draw them
             for (String bus : busesRequested.split(", ")) {
-                KmlLayer kmlLayer = null;
+                KmlLayer kmlLayer;
                 try {
                     int id = getResources().getIdentifier("raw/_" + bus, null, this.getPackageName());
                     kmlLayer = new KmlLayer(mMap, id, getApplicationContext());

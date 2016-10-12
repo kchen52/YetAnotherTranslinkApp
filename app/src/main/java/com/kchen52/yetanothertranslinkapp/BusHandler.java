@@ -1,19 +1,23 @@
 package com.kchen52.yetanothertranslinkapp;
 
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.util.Log;
+
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by Kevin on 2016-10-12.
- */
 public class BusHandler {
     private LinkedList<Bus> buses;
     private Date lastUpdatedTime;
+    private Context appContext;
 
-    public BusHandler() {
+    public BusHandler(Context applicationContext) {
         buses = new LinkedList<>();
+        appContext = applicationContext;
     }
     public LinkedList<Bus> getBuses() {
         return buses;
@@ -55,5 +59,42 @@ public class BusHandler {
             }
         }
         return listOfBuses;
+    }
+
+    public Date getLastUpdatedTime() {
+        return lastUpdatedTime;
+    }
+
+    public void updateWithLastText() {
+        String lastText = readLastYATAText();
+        if (!lastText.equals("")) {
+            // Provided it's not empty, parse the message, draw buses, and update last updated time
+            String unreadableDate = lastText.split("\\{")[0];
+            String bodyOfText = lastText.split("\\{")[1];
+            // Just to get rid of that last "}"
+            bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
+            lastUpdatedTime = new Date(Long.parseLong(unreadableDate));
+            buses = parseMessage(bodyOfText);
+        }
+    }
+
+    private String readLastYATAText() {
+        // Reads the inbox for the last message sent from the server if it exists
+        String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
+        //Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'"+TWILIO_NUMBER+"\'", null, "date desc limit 1");
+        Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'+17786554235\'", null, "date desc limit 1");
+
+        StringBuilder builder = new StringBuilder();
+        if (cursor.moveToFirst()) {
+            int indexBody = cursor.getColumnIndex("body");
+            int indexDate = cursor.getColumnIndex("date");
+            builder.append(cursor.getString(indexDate));
+            builder.append("{");
+            builder.append(cursor.getString(indexBody));
+            builder.append("}");
+        }
+
+        if (!cursor.isClosed()) { cursor.close(); }
+        return builder.toString();
     }
 }
