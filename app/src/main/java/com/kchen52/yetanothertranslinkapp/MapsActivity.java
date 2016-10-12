@@ -40,26 +40,20 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     private BroadcastReceiver smsReceiver;
-    private SharedPreferences sharedPref;
-
-    private String TWILIO_NUMBER;
-    private String busesRequested;
 
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
-    private String lastRequestedTime = "";
 
     private ArrayList<KmlLayer> kmlLayers = new ArrayList<>();
     private ArrayList<Marker> markers = new ArrayList<>();
 
     private BusHandler busHandler;
+    private RequestHandler requestHandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,8 +62,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
         busHandler = new BusHandler(getApplicationContext());
+        requestHandler = new RequestHandler(getApplicationContext());
     }
 
     @Override
@@ -79,12 +74,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // immediately applied once coming back to the maps activity. onStart is also called after onCreate, so this also covers
         // that case lol
         // Read from SharedPreferences, and update TWILIO_NUMBER and busesRequested
-        TWILIO_NUMBER = sharedPref.getString(getString(R.string.saved_twilio_number), getString(R.string.saved_twilio_number_default));
-        busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
-
+        requestHandler.update();
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
         if (mMap != null) {
-            createRouteOverlays(busesRequested);
+            //createRouteOverlays(busesRequested);
+            createRouteOverlays(requestHandler.getBusesRequested());
         }
     }
 
@@ -116,7 +110,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // TODO: Dynamically set default gps location
+        // TODO: Allow user to dynamically set default gps location
         LatLng defaultMapLocation = new LatLng(49.118641, -122.747700);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultMapLocation));
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultMapLocation, 12.0f));
@@ -128,9 +122,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         busHandler.updateWithLastText();
         drawBuses(busHandler.getBuses());
-        updateTime(busHandler.getLastUpdatedTime());
+        updateDisplayedTime(busHandler.getLastUpdatedTime());
 
-        createRouteOverlays(busesRequested);
+        createRouteOverlays(requestHandler.getBusesRequested());
     }
 
     private void createRouteOverlays(String busesRequested) {
@@ -149,7 +143,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
                     kmlLayer.addLayerToMap();
                     kmlLayers.add(kmlLayer);
-                    Log.i("OVERLAY_TEST", "Just added a new layer for " + bus + ", size(): " + kmlLayers.size());
+                    Log.d("OVERLAY_TEST", "Just added a new layer for " + bus + ", size(): " + kmlLayers.size());
                 } catch (XmlPullParserException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -160,24 +154,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-    }
-    // Reads the inbox for the last message sent from the server if it exists
-    private String getLastYATAText() {
-        String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
-        Cursor cursor = getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'"+TWILIO_NUMBER+"\'", null, "date desc limit 1");
-
-        StringBuilder builder = new StringBuilder();
-        if (cursor.moveToFirst()) {
-            int indexBody = cursor.getColumnIndex("body");
-            int indexDate = cursor.getColumnIndex("date");
-            builder.append(cursor.getString(indexDate));
-            builder.append("{");
-            builder.append(cursor.getString(indexBody));
-            builder.append("}");
-        }
-
-        if (!cursor.isClosed()) { cursor.close(); }
-        return builder.toString();
     }
 
     private class SMSReceiver extends BroadcastReceiver {
@@ -194,12 +170,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
                         String phoneNumber = currentMessage.getDisplayOriginatingAddress();
                         //Toast.makeText(context, "Number: " + phoneNumber, Toast.LENGTH_LONG).show();
-                        if (phoneNumber.equals(TWILIO_NUMBER)) {
+                        if (phoneNumber.equals(requestHandler.getTwilioNumber())) {
                             String message = currentMessage.getDisplayMessageBody();
                             entireSMS.append(message);
                         }
                     }
-                    updateTime(new Date());
+                    updateDisplayedTime(new Date());
 
                     busHandler.updateBuses(entireSMS.toString());
                     drawBuses(busHandler.getBuses());
@@ -210,8 +186,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void updateTime(Date currentTime) {
-        lastRequestedTime = dateFormat.format(currentTime);
+    private void updateDisplayedTime(Date currentTime) {
+        String lastRequestedTime = dateFormat.format(currentTime);
         TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
         String formattedTime = String.format(getResources().getString(R.string.last_updated_preamble), lastRequestedTime);
         lastRequestedTime_TextView.setText(formattedTime);
@@ -237,15 +213,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerOptions temp = new MarkerOptions().position(busLocation)
                 .title(bus.getDestination()+  ": " + bus.getVehicleNumber())
                 .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
-        /*mMap.addMarker(new MarkerOptions().position(busLocation)
-                .title(bus.getDestination() + ":" + bus.getVehicleNumber())
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp)));*/
         markers.add(mMap.addMarker(temp));
     }
 
     public void requestInformation(View view) {
-
         // Create a snackbar to let the user know what was requested, if at all
+        String busesRequested = requestHandler.getBusesRequested();
         if (busesRequested.equals("")) {
             Snackbar.make(view, "No request was sent because no buses are selected.", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
@@ -253,18 +226,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
             String formattedRequest = "Request: " + busesRequested;
-            sendSMS(TWILIO_NUMBER, formattedRequest);
-        }
-
-    }
-
-    private void sendSMS(String phoneNumber, String msg) {
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNumber, null, msg, null, null);
-        } catch (Exception e) {
-            e.printStackTrace();
+            requestHandler.sendSMS(formattedRequest);
         }
     }
-
 }
