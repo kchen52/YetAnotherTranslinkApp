@@ -2,6 +2,8 @@ package com.kchen52.yetanothertranslinkapp;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
 
@@ -39,5 +41,11 @@ public class RequestHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean hasActiveInternetConnection() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

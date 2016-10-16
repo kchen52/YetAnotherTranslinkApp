@@ -70,7 +70,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         requestHandler.update();
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
         if (mMap != null) {
-            //createRouteOverlays(busesRequested);
             createRouteOverlays(requestHandler.getBusesRequested());
         }
     }
@@ -136,7 +135,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
                     kmlLayer.addLayerToMap();
                     kmlLayers.add(kmlLayer);
-                    Log.d("OVERLAY_TEST", "Just added a new layer for " + bus + ", size(): " + kmlLayers.size());
                 } catch (XmlPullParserException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -209,6 +207,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         markers.add(mMap.addMarker(temp));
     }
 
+    /*
+     * Displays a snackbar indicated what was done, then calls the action in RequestHandler
+     */
     public void requestInformation(View view) {
         // Create a snackbar to let the user know what was requested, if at all
         String busesRequested = requestHandler.getBusesRequested();
@@ -221,8 +222,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Check that an internet connection is available. If so, and if the user has ticked the option,
             // directly use Translink's API over the internet rather than text as the medium.
-            String formattedRequest = "Request: " + busesRequested;
-            requestHandler.sendSMS(formattedRequest);
+            // TODO: Allow user to set whether or not the internet connection is to be used
+            if (requestHandler.hasActiveInternetConnection()) {
+                Log.d("DEBUG", "The device currently has an active internet connection, so don't send the SMS");
+            } else {
+                String formattedRequest = "Request: " + busesRequested;
+                requestHandler.sendSMS(formattedRequest);
+            }
         }
     }
 }
