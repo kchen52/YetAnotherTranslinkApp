@@ -42,11 +42,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
 
-    private ArrayList<KmlLayer> kmlLayers = new ArrayList<>();
     private ArrayList<Marker> markers = new ArrayList<>();
 
     private BusHandler busHandler;
     private RequestHandler requestHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,7 +132,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     int id = getResources().getIdentifier("raw/_" + bus, null, this.getPackageName());
                     kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
                     kmlLayer.addLayerToMap();
-                    kmlLayers.add(kmlLayer);
                 } catch (XmlPullParserException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
