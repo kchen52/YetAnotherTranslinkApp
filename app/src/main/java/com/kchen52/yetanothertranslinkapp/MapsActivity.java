@@ -121,12 +121,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void createRouteOverlays(String busesRequested) {
         if (!busesRequested.equals("")) {
-            // Clear the previous layers
-            for (KmlLayer kmlLayer : kmlLayers) {
-                kmlLayer.removeLayerFromMap();
-            }
-            kmlLayers.clear();
-
+            // Clear the entire map
+            mMap.clear();
+            // Draw buses
+            drawBuses(busHandler.getBuses());
             // Then create new layers and draw them
             for (String bus : busesRequested.split(", ")) {
                 KmlLayer kmlLayer;
