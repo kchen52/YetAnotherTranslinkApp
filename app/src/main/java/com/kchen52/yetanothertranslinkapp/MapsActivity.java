@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.support.design.widget.Snackbar;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsMessage;
 import android.util.Log;
@@ -167,7 +167,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                     }
                     updateDisplayedTime(new Date());
-
                     busHandler.updateBuses(entireSMS.toString());
                     drawBuses(busHandler.getBuses());
                 }
@@ -217,18 +216,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Snackbar.make(view, "No request was sent because no buses are selected.", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         } else {
-            Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
 
             // Check that an internet connection is available. If so, and if the user has ticked the option,
             // directly use Translink's API over the internet rather than text as the medium.
             // TODO: Allow user to set whether or not the internet connection is to be used
             if (requestHandler.hasActiveInternetConnection()) {
-                Log.d("DEBUG", "The device currently has an active internet connection, so don't send the SMS");
+                Snackbar.make(view, "Information request for " + busesRequested + " sent over internet.", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+                busHandler = requestHandler.updateWithInternet();
+                updateDisplayedTime(busHandler.getLastUpdatedTime());
+                drawBuses(busHandler.getBuses());
             } else {
+                Snackbar.make(view, "Information request for " + busesRequested + " sent over SMS. There may be several seconds of wait.", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
                 String formattedRequest = "Request: " + busesRequested;
                 requestHandler.sendSMS(formattedRequest);
             }
         }
     }
+
 }

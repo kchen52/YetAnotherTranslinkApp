@@ -22,6 +22,13 @@ public class BusHandler {
         return buses;
     }
 
+    public void addBus(Bus bus) {
+        buses.add(bus);
+    }
+    public void setLastUpdatedTime(Date date) {
+        lastUpdatedTime = date;
+    }
+
     // Takes the incoming SMS message, parses it and saves the information in the buses linkedlist
     public void updateBuses(String message) {
         buses = parseMessage(message);
