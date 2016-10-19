@@ -1,32 +1,33 @@
 package com.kchen52.yetanothertranslinkapp;
 
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.Window;
+import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.SearchView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
-public class BusListActivity extends AppCompatActivity {
+public class BusListActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private SharedPreferences sharedPref;
+
+    private SearchView searchView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
         setContentView(R.layout.activity_bus_list);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         String busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
@@ -36,10 +37,62 @@ public class BusListActivity extends AppCompatActivity {
         CustomAdapter adapter = new CustomAdapter(this, getBusListArray(busesRequested));
         listView.setAdapter(adapter);
 
-        /*TextView busesRequestedTextView = (TextView) findViewById(R.id.buses_requested_textview);
-        String formattedRequestedBuses = String.format(getResources().getString(R.string.buses_requested_preamble), busesRequested);
-        busesRequestedTextView.setText(formattedRequestedBuses);*/
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.search_menu, menu);
+        /*inflater.inflate(R.menu.example, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        searchView = (SearchView) searchItem.getActionView();
+        if (searchView == null) {
+            Log.d("DEBUG", "searchView should not be null, yet it is...");
+        }
+        setupSearchView(searchItem);*/
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            case R.id.action_search:
+                openSearchBar();
+                return true;
+        }
+        return true;
+    }
+    private void openSearchBar() {
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setCustomView(R.layout.search_bar);
+
+        EditText searchEditText = (EditText) actionBar.getCustomView().findViewById(R.id.etSearch);
+        searchEditText.setText("temp text");
+        searchEditText.requestFocus();
+
+    }
+
+    private void setupSearchView(MenuItem searchItem) {
+        searchView.setIconifiedByDefault(false);
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        if (searchManager != null) {
+            List<SearchableInfo> searchables = searchManager.getSearchablesInGlobalSearch();
+            SearchableInfo info = searchManager.getSearchableInfo(getComponentName());
+            for (SearchableInfo inf : searchables) {
+                if (inf.getSuggestAuthority() != null && inf.getSuggestAuthority().startsWith("applications")) {
+                    info = inf;
+                }
+            }
+            searchView.setSearchableInfo(info);
+        }
+        searchView.setOnQueryTextListener(this);
+    }
+
+
+
 
 
     private Model[] getBusListArray(String savedCheckedBuses) {
@@ -290,5 +343,15 @@ public class BusListActivity extends AppCompatActivity {
             }
         }
         return new Model(busNumberAndDestinations, checked);
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        return false;
     }
 }
