@@ -5,19 +5,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class CustomAdapter extends ArrayAdapter<Model> {
-    Model[] modelItems = null;
-    Context context;
-    SharedPreferences sharedPref;
+    private Model[] modelItems = null;
+    private Context context;
+    private SharedPreferences sharedPref;
 
     public CustomAdapter(Context context, Model[] resource) {
         super(context, R.layout.bus_row, resource);

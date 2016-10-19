@@ -1,6 +1,7 @@
 package com.kchen52.yetanothertranslinkapp;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -25,6 +26,8 @@ public class BusListActivity extends AppCompatActivity {
 
     private SearchView searchView;
     private ListView listView;
+    private String busesRequested;
+    private Context applicationContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,11 +36,12 @@ public class BusListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bus_list);
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        String busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
+        busesRequested = sharedPref.getString(getString(R.string.saved_buses_requested), getString(R.string.saved_buses_requested_default));
 
         listView = (ListView)findViewById(R.id.busListView);
 
-        CustomAdapter adapter = new CustomAdapter(this, getBusListArray(busesRequested));
+        applicationContext = this;
+        CustomAdapter adapter = new CustomAdapter(applicationContext, getBusListArray(""));
         listView.setAdapter(adapter);
     }
 
@@ -72,6 +76,7 @@ public class BusListActivity extends AppCompatActivity {
         InputMethodManager imm = (InputMethodManager)this.getSystemService(Service.INPUT_METHOD_SERVICE);
         imm.showSoftInput(searchEditText, 0);
     }
+
     private void closeSearchBar() {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowCustomEnabled(false);
@@ -88,17 +93,19 @@ public class BusListActivity extends AppCompatActivity {
 
         @Override
         public void afterTextChanged(Editable s) {
-            /*CustomAdapter adapter = new CustomAdapter(this, getBusListArray(busesRequested));
-            listView.setAdapter(adapter);*/
+            CustomAdapter adapter = new CustomAdapter(applicationContext, getBusListArray(s.toString()));
+            listView.setAdapter(adapter);
         }
     }
 
-    private Model[] getBusListArray(String savedCheckedBuses) {
-        String[] buses = savedCheckedBuses.split(", ");
+    private Model[] getBusListArray(String searchTerm) {
+        String[] buses = busesRequested.split(", ");
 
         List<Model> busList = new ArrayList<>();
         for (String busNumberAndDestination : busDestinationList) {
-            busList.add(createModel(busNumberAndDestination, buses));
+            if (busNumberAndDestination.contains(searchTerm.toUpperCase())) {
+                busList.add(createModel(busNumberAndDestination, buses));
+            }
         }
         return busList.toArray(new Model[busList.size()]);
     }
