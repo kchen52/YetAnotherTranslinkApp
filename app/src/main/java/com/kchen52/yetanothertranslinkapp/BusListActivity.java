@@ -16,7 +16,6 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.SearchView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.List;
 public class BusListActivity extends AppCompatActivity {
     private SharedPreferences sharedPref;
 
-    private SearchView searchView;
     private ListView listView;
     private String busesRequested;
     private Context applicationContext;

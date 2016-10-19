@@ -8,7 +8,7 @@
 
     <string name="last_updated_preamble">Last updated: %s</string>
     <string name="buses_requested_preamble">Currently selected buses: %s</string>
-    <string name="title_activity_bus_list">BusListActivity</string>
+    <string name="title_activity_bus_list">Bus List</string>
 
     <!-- Shared Preferences stuff -->
     <string name="saved_twilio_number">savedTwilioNumber</string>
