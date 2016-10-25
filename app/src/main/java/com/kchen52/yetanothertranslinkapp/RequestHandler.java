@@ -20,8 +20,10 @@ public class RequestHandler {
     private SharedPreferences sharedPref;
     private Context appContext;
 
+    // TODO: Separate sharedpref behaviour out into its own class?
     private String TWILIO_NUMBER;
     private String busesRequested;
+    private boolean useInternetIfAvailable;
 
 
     public RequestHandler(Context applicationContext) {
@@ -33,6 +35,7 @@ public class RequestHandler {
     public void update() {
         TWILIO_NUMBER = sharedPref.getString(appContext.getString(R.string.saved_twilio_number), appContext.getString(R.string.saved_twilio_number_default));
         busesRequested = sharedPref.getString(appContext.getString(R.string.saved_buses_requested), appContext.getString(R.string.saved_buses_requested_default));
+        useInternetIfAvailable = sharedPref.getBoolean(appContext.getString(R.string.use_internet_if_available), true);
     }
 
     public String getBusesRequested() {
@@ -42,6 +45,8 @@ public class RequestHandler {
     public String getTwilioNumber() {
         return TWILIO_NUMBER;
     }
+
+    public boolean getUseInternet() { return useInternetIfAvailable; }
 
     public void sendSMS(String msg) {
         try {

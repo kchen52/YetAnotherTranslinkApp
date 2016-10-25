@@ -222,7 +222,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Check that an internet connection is available. If so, and if the user has ticked the option,
             // directly use Translink's API over the internet rather than text as the medium.
             // TODO: Allow user to set whether or not the internet connection is to be used
-            if (requestHandler.hasActiveInternetConnection()) {
+            if (requestHandler.hasActiveInternetConnection() && requestHandler.getUseInternet()) {
                 Snackbar.make(view, "Information request for " + busesRequested + " sent over internet.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 busHandler = requestHandler.updateWithInternet();

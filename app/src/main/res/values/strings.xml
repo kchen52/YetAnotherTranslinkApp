@@ -13,6 +13,7 @@
     <!-- Shared Preferences stuff -->
     <string name="saved_twilio_number">savedTwilioNumber</string>
     <string name="saved_buses_requested">savedBusesRequested</string>
+    <string name="use_internet_if_available">useInternetIfAvailable</string>
     <string name="saved_twilio_number_default">+17786554235</string>
     <string name="saved_buses_requested_default">320</string>
     <string name="title_activity_settings">Settings</string>
