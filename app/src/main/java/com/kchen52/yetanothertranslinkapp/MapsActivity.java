@@ -174,9 +174,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void updateDisplayedTime(Date currentTime) {
-        String lastRequestedTime = dateFormat.format(currentTime);
-        TextView lastRequestedTime_TextView= (TextView)findViewById(R.id.lastRequestDateTextView);
-        String formattedTime = String.format(getResources().getString(R.string.last_updated_preamble), lastRequestedTime);
+        String formattedTime;
+        if (currentTime == null) {
+            formattedTime = "Last updated: Never";
+        } else {
+            String lastRequestedTime = dateFormat.format(currentTime);
+            formattedTime = String.format(getResources().getString(R.string.last_updated_preamble), lastRequestedTime);
+        }
+        TextView lastRequestedTime_TextView = (TextView) findViewById(R.id.lastRequestDateTextView);
         lastRequestedTime_TextView.setText(formattedTime);
     }
 

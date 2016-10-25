@@ -81,6 +81,8 @@ public class BusHandler {
             bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
             lastUpdatedTime = new Date(Long.parseLong(unreadableDate));
             buses = parseMessage(bodyOfText);
+        } else {
+            lastUpdatedTime = null;
         }
     }
 
