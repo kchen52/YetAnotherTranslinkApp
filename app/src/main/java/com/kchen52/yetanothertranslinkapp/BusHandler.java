@@ -89,7 +89,6 @@ public class BusHandler {
     private String readLastYATAText(String twilioNumber) {
         // Reads the inbox for the last message sent from the server if it exists
         String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
-        //Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'"+TWILIO_NUMBER+"\'", null, "date desc limit 1");
         Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'" + twilioNumber + "\'", null, "date desc limit 1");
 
         StringBuilder builder = new StringBuilder();
@@ -104,5 +103,6 @@ public class BusHandler {
 
         if (!cursor.isClosed()) { cursor.close(); }
         return builder.toString();
+
     }
 }

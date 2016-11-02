@@ -129,7 +129,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             for (String bus : busesRequested.split(", ")) {
                 KmlLayer kmlLayer;
                 try {
-                    int id = getResources().getIdentifier("raw/_" + bus, null, this.getPackageName());
+                    int id = getResources().getIdentifier("raw/_" + bus.toLowerCase(), null, this.getPackageName());
                     kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
                     kmlLayer.addLayerToMap();
                 } catch (XmlPullParserException e) {
