@@ -193,11 +193,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             markers.clear();
         }
+        double averageLat = 0;
+        double averageLong = 0;
+        int numberOfBuses = 0;
         for (Bus bus : buses) {
             Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
                     ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
+
+            numberOfBuses++;
+            averageLong += bus.getLongitude();
+            averageLat += bus.getLatitude();
             addMarker(bus);
         }
+
+        averageLat = averageLat / numberOfBuses;
+        averageLong = averageLong / numberOfBuses;
+        centerCamera(averageLat, averageLong);
+    }
+
+    private void centerCamera(double avgLat, double avgLong) {
+        LatLng newLocation = new LatLng(avgLat, avgLong);
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(newLocation));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, 10.0f));
     }
 
     private void addMarker(Bus bus) {
