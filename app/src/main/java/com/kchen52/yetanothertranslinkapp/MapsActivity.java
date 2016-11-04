@@ -102,11 +102,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // TODO: Allow user to dynamically set default gps location
-        LatLng defaultMapLocation = new LatLng(49.118641, -122.747700);
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultMapLocation));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(defaultMapLocation, 12.0f));
-
         IntentFilter smsFilter = new IntentFilter();
         smsFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         smsReceiver = new SMSReceiver();
@@ -238,7 +233,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Check that an internet connection is available. If so, and if the user has ticked the option,
             // directly use Translink's API over the internet rather than text as the medium.
-            // TODO: Allow user to set whether or not the internet connection is to be used
             if (requestHandler.hasActiveInternetConnection() && requestHandler.getUseInternet()) {
                 Snackbar.make(view, "Information request for " + busesRequested + " sent over internet.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
