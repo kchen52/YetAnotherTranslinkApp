@@ -17,4 +17,8 @@
     <string name="saved_twilio_number_default">+6041234567</string>
     <string name="saved_buses_requested_default"></string>
     <string name="title_activity_settings">Settings</string>
+    <string name="translink_api">translinkApi</string>
+    <string name="translink_api_default"></string>
+
+
 </resources>

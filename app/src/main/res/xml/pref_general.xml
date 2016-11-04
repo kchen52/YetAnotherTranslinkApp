@@ -8,7 +8,6 @@
             android:title="Always use internet connection." />
 
         <EditTextPreference
-            android:defaultValue="+17786554235"
             android:inputType="phone"
             android:key="savedTwilioNumber"
             android:maxLines="1"
@@ -16,5 +15,14 @@
             android:singleLine="true"
             android:title="Twilio number"
             android:summary="Sets the Twilio number to send texts to when using SMS."/>
+
+        <EditTextPreference
+            android:inputType="text"
+            android:key="@string/translink_api"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Translink API"
+            android:summary="Translink API to use for bus updates."/>
     </PreferenceCategory>
 </PreferenceScreen>

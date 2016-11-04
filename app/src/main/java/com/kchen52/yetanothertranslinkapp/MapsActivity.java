@@ -234,13 +234,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Check that an internet connection is available. If so, and if the user has ticked the option,
             // directly use Translink's API over the internet rather than text as the medium.
             if (requestHandler.hasActiveInternetConnection() && requestHandler.getUseInternet()) {
+                if (!requestHandler.hasTranslinkAPI()) {
+                    Snackbar.make(view, "Translink API currently not set.", Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                    return;
+                }
                 Snackbar.make(view, "Information request for " + busesRequested + " sent over internet.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 busHandler = requestHandler.updateWithInternet();
                 updateDisplayedTime(busHandler.getLastUpdatedTime());
                 drawBuses(busHandler.getBuses());
             } else {
-                Snackbar.make(view, "Information request for " + busesRequested + " sent over SMS. There may be several seconds of wait.", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Information request for " + busesRequested + " sent over SMS. There may be several seconds of waiting.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 String formattedRequest = "Request: " + busesRequested;
                 requestHandler.sendSMS(formattedRequest);

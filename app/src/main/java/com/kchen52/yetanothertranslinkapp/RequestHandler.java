@@ -22,6 +22,7 @@ public class RequestHandler {
 
     // TODO: Separate sharedpref behaviour out into its own class?
     private String TWILIO_NUMBER;
+    private String TRANSLINK_API;
     private String busesRequested;
     private boolean useInternetIfAvailable;
 
@@ -36,6 +37,7 @@ public class RequestHandler {
         TWILIO_NUMBER = sharedPref.getString(appContext.getString(R.string.saved_twilio_number), appContext.getString(R.string.saved_twilio_number_default));
         busesRequested = sharedPref.getString(appContext.getString(R.string.saved_buses_requested), appContext.getString(R.string.saved_buses_requested_default));
         useInternetIfAvailable = sharedPref.getBoolean(appContext.getString(R.string.use_internet_if_available), true);
+        TRANSLINK_API = sharedPref.getString(appContext.getString(R.string.translink_api), appContext.getString(R.string.translink_api_default));
     }
 
     public String getBusesRequested() {
@@ -63,6 +65,9 @@ public class RequestHandler {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    public boolean hasTranslinkAPI() {
+        return !TRANSLINK_API.equals("");
+    }
 
     public BusHandler updateWithInternet() {
         final BusHandler newBusHandler = new BusHandler(appContext);
@@ -72,7 +77,7 @@ public class RequestHandler {
         Thread requestThread = new Thread() {
             public void run() {
                 for (String bus : buses) {
-                    String busRequestURL = "http://api.translink.ca/rttiapi/v1/buses?apikey=1517ba37nS64aO4ZjqBD" +
+                    String busRequestURL = "http://api.translink.ca/rttiapi/v1/buses?apikey=" + TRANSLINK_API +
                             "&routeNo=" + bus;
                     String GETRequestResult = sendGetRequest(busRequestURL);
 
