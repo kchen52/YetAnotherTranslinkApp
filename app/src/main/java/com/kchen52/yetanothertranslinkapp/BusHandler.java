@@ -1,8 +1,13 @@
 package com.kchen52.yetanothertranslinkapp;
 
+import android.content.ContentResolver;
 import android.content.Context;
+import android.database.CharArrayBuffer;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.net.Uri;
+import android.os.Bundle;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -73,7 +78,7 @@ public class BusHandler {
 
     public void updateWithLastText(String twilioNumber) {
         String lastText = readLastYATAText(twilioNumber);
-        if (!lastText.equals("")) {
+        if (lastText != null && !"".equals(lastText)) {
             // Provided it's not empty, parse the message, draw buses, and update last updated time
             String unreadableDate = lastText.split("\\{")[0];
             String bodyOfText = lastText.split("\\{")[1];
@@ -86,23 +91,32 @@ public class BusHandler {
         }
     }
 
+    /*
+     * Returns a null string if a SecurityException (e.g., permissions issue) is thrown
+     *
+     */
     private String readLastYATAText(String twilioNumber) {
         // Reads the inbox for the last message sent from the server if it exists
         String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
-        Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'" + twilioNumber + "\'", null, "date desc limit 1");
+        try {
+            Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'" + twilioNumber + "\'", null, "date desc limit 1");
+            StringBuilder builder = new StringBuilder();
+            if (cursor.moveToFirst()) {
+                int indexBody = cursor.getColumnIndex("body");
+                int indexDate = cursor.getColumnIndex("date");
+                builder.append(cursor.getString(indexDate));
+                builder.append("{");
+                builder.append(cursor.getString(indexBody));
+                builder.append("}");
+            }
 
-        StringBuilder builder = new StringBuilder();
-        if (cursor.moveToFirst()) {
-            int indexBody = cursor.getColumnIndex("body");
-            int indexDate = cursor.getColumnIndex("date");
-            builder.append(cursor.getString(indexDate));
-            builder.append("{");
-            builder.append(cursor.getString(indexBody));
-            builder.append("}");
+            if (!cursor.isClosed()) { cursor.close(); }
+            return builder.toString();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        } finally {
+            return null;
         }
-
-        if (!cursor.isClosed()) { cursor.close(); }
-        return builder.toString();
 
     }
 }

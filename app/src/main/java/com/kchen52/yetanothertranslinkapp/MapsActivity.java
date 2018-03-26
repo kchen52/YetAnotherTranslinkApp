@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.SmsMessage;
@@ -20,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -47,15 +50,34 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private BusHandler busHandler;
     private RequestHandler requestHandler;
 
+    private SharedPreferences sharedPref;
+
+    @Override
+    protected void onPause() {
+        if (mMap != null) {
+            CameraPosition cameraPosition = mMap.getCameraPosition();
+            LatLng latLng = cameraPosition.target;
+            SharedPreferences.Editor sharedPrefEditor = sharedPref.edit();
+            sharedPrefEditor.putFloat("lastLat", (float) latLng.latitude);
+            sharedPrefEditor.putFloat("lastLong", (float) latLng.longitude);
+            sharedPrefEditor.putFloat("lastZoom", (float) cameraPosition.zoom);
+            sharedPrefEditor.commit();
+        }
+        super.onPause();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         busHandler = new BusHandler(getApplicationContext());
         requestHandler = new RequestHandler(getApplicationContext());
     }
@@ -71,7 +93,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
         if (mMap != null) {
             createRouteOverlays(requestHandler.getBusesRequested());
+            centerCamera(
+                (double) sharedPref.getFloat("lastLat", 49.264566F),
+                (double) sharedPref.getFloat("lastLong", -123.133253F),
+                sharedPref.getFloat("lastZoom", 10f));
         }
+
     }
 
     @Override
@@ -83,6 +110,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        CameraPosition cameraPosition = mMap.getCameraPosition();
+        LatLng latLng = cameraPosition.target;
+        SharedPreferences.Editor sharedPrefEditor = sharedPref.edit();
+        sharedPrefEditor.putFloat("lastLat", (float) latLng.latitude);
+        sharedPrefEditor.putFloat("lastLong", (float) latLng.longitude);
+        sharedPrefEditor.putFloat("lastZoom", (float) cameraPosition.zoom);
+        sharedPrefEditor.commit();
         switch (item.getItemId()) {
             case R.id.bus_list:
                 Intent busListIntent = new Intent(this, BusListActivity.class);
@@ -112,6 +146,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         updateDisplayedTime(busHandler.getLastUpdatedTime());
 
         createRouteOverlays(requestHandler.getBusesRequested());
+        centerCamera(
+                (double) sharedPref.getFloat("lastLat", 49.264566F),
+                (double) sharedPref.getFloat("lastLong", -123.133253F),
+                sharedPref.getFloat("lastZoom", 10f));
     }
 
     private void createRouteOverlays(String busesRequested) {
@@ -203,13 +241,13 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         averageLat = averageLat / numberOfBuses;
         averageLong = averageLong / numberOfBuses;
-        centerCamera(averageLat, averageLong);
+        centerCamera(averageLat, averageLong, 10f);
     }
 
-    private void centerCamera(double avgLat, double avgLong) {
+    private void centerCamera(double avgLat, double avgLong, float zoomLevel) {
         LatLng newLocation = new LatLng(avgLat, avgLong);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(newLocation));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, 10.0f));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel));
     }
 
     private void addMarker(Bus bus) {
@@ -239,7 +277,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             .setAction("Action", null).show();
                     return;
                 }
-                Snackbar.make(view, "Information request for " + busesRequested + " sent over internet.", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 busHandler = requestHandler.updateWithInternet();
                 updateDisplayedTime(busHandler.getLastUpdatedTime());
@@ -252,5 +290,4 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
     }
-
 }
