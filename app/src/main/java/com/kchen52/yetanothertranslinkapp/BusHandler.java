@@ -8,15 +8,19 @@ import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BusHandler {
+public class BusHandler implements Parcelable {
     private LinkedList<Bus> buses;
     private Date lastUpdatedTime;
+    // TODO: Remove the following and its references
+    // Will not be used for much longer after we remove SMS capabilities
     private Context appContext;
 
     public BusHandler(Context applicationContext) {
@@ -119,4 +123,36 @@ public class BusHandler {
         }
 
     }
+
+    // Parcelling methods
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeArray(new Object[] {
+                this.buses,
+                this.lastUpdatedTime,
+        });
+    }
+
+    public BusHandler(Parcel in) {
+        Object[] members = in.readArray(null);
+        this.buses = (LinkedList<Bus>) members[0];
+        this.lastUpdatedTime = (Date) members[1];
+    }
+
+    public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
+        public BusHandler createFromParcel(Parcel in) {
+            return new BusHandler(in);
+        }
+
+        @Override
+        public BusHandler[] newArray(int size) {
+            return new BusHandler[0];
+        }
+    };
 }

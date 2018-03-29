@@ -4,8 +4,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Bundle;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.telephony.SmsManager;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +24,6 @@ public class RequestHandler {
     private SharedPreferences sharedPref;
     private Context appContext;
 
-    // TODO: Separate sharedpref behaviour out into its own class?
     private String TWILIO_NUMBER;
     private String TRANSLINK_API;
     private String busesRequested;
@@ -72,8 +74,9 @@ public class RequestHandler {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-
-    public BusHandler updateWithInternet() {
+    // Previously returned a BusHandler, now pass it as a message to the UI thread to
+    // prevent blocking
+    public BusHandler updateWithInternet(final HandlerExtension handlerExtension) {
         final BusHandler newBusHandler = new BusHandler(appContext);
         final String[] buses = busesRequested.split(", ");
         if (buses.length == 0) { return newBusHandler; }
@@ -98,16 +101,19 @@ public class RequestHandler {
                     }
                 }
                 newBusHandler.setLastUpdatedTime(new Date());
+                reportDone(handlerExtension, newBusHandler);
             }
         };
         requestThread.start();
-
-        try {
-            requestThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         return newBusHandler;
+    }
+
+    private void reportDone(HandlerExtension handlerExtension, BusHandler busHandler) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("busHandler", busHandler);
+        Message message = new Message();
+        message.setData(bundle);
+        handlerExtension.sendMessage(message);
     }
 
 

@@ -8,12 +8,14 @@ public class Bus {
     private int vehicleNumber;
     private double longitude;
     private double latitude;
+    private String direction;
 
     public Bus() {
         destination = "null";
         vehicleNumber = -1;
         longitude = 0.0;
         latitude = 0.0;
+        direction = "West";
     }
 
     // Basically the same algorithm that the servlet uses
@@ -23,6 +25,7 @@ public class Bus {
             vehicleNumber = Integer.parseInt(setValue("VehicleNo", rawInfo));
             longitude = Double.parseDouble(setValue("Longitude", rawInfo));
             latitude = Double.parseDouble(setValue("Latitude", rawInfo));
+            direction = setValue("Direction", rawInfo);
         } catch (IllegalStateException e) {
             // This happens if the init string is in an invalid format. Set all members to their
             // default values.
@@ -30,6 +33,7 @@ public class Bus {
             vehicleNumber = -1;
             longitude = 0.0;
             latitude = 0.0;
+            direction = "West";
         }
     }
 
@@ -40,6 +44,7 @@ public class Bus {
         return matcher.group(1);
     }
 
+    // This one should only be used for SMS. Since I'm removing that soon this won't be used
     public void init(String busDestination, String input) {
         try {
             //Note: input is in the form 8122:-122.842117,-122.842117

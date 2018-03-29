@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -31,6 +33,7 @@ import com.google.maps.android.data.kml.KmlLayer;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,6 +41,8 @@ import java.util.Date;
 import java.util.LinkedList;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+    private final String TAG = "MapsActivity";
+    private HandlerExtension handlerExtension;
 
     private GoogleMap mMap;
     private BroadcastReceiver smsReceiver;
@@ -71,6 +76,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        handlerExtension = new HandlerExtension(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -94,9 +100,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mMap != null) {
             createRouteOverlays(requestHandler.getBusesRequested());
             centerCamera(
-                (double) sharedPref.getFloat("lastLat", 49.264566F),
-                (double) sharedPref.getFloat("lastLong", -123.133253F),
-                sharedPref.getFloat("lastZoom", 10f));
+                    (double) sharedPref.getFloat("lastLat", 49.264566F),
+                    (double) sharedPref.getFloat("lastLong", -123.133253F),
+                    sharedPref.getFloat("lastZoom", 10f));
         }
 
     }
@@ -115,7 +121,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SharedPreferences.Editor sharedPrefEditor = sharedPref.edit();
         sharedPrefEditor.putFloat("lastLat", (float) latLng.latitude);
         sharedPrefEditor.putFloat("lastLong", (float) latLng.longitude);
-        sharedPrefEditor.putFloat("lastZoom", (float) cameraPosition.zoom);
+        sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom);
         sharedPrefEditor.commit();
         switch (item.getItemId()) {
             case R.id.bus_list:
@@ -226,22 +232,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             markers.clear();
         }
-        double averageLat = 0;
-        double averageLong = 0;
-        int numberOfBuses = 0;
         for (Bus bus : buses) {
             Log.i("Drawing the following:", "Destination: " + bus.getDestination() + ", VehicleNo: " + bus.getVehicleNumber() +
                     ", Longitude: " + bus.getLongitude() + ", Latitude: " + bus.getLatitude());
 
-            numberOfBuses++;
-            averageLong += bus.getLongitude();
-            averageLat += bus.getLatitude();
             addMarker(bus);
         }
-
-        averageLat = averageLat / numberOfBuses;
-        averageLong = averageLong / numberOfBuses;
-        centerCamera(averageLat, averageLong, 10f);
     }
 
     private void centerCamera(double avgLat, double avgLong, float zoomLevel) {
@@ -265,29 +261,32 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Create a snackbar to let the user know what was requested, if at all
         String busesRequested = requestHandler.getBusesRequested();
         if (busesRequested.equals("")) {
-            Snackbar.make(view, "No request was sent because no buses are selected.", Snackbar.LENGTH_LONG)
+            Snackbar.make(view, "Please select at least one bus route to track.", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
-        } else {
-
-            // Check that an internet connection is available. If so, and if the user has ticked the option,
-            // directly use Translink's API over the internet rather than text as the medium.
-            if (requestHandler.hasActiveInternetConnection() && requestHandler.getUseInternet()) {
-                if (!requestHandler.hasTranslinkAPI()) {
-                    Snackbar.make(view, "Translink API currently not set.", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                    return;
-                }
-                Snackbar.make(view, "Information request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                busHandler = requestHandler.updateWithInternet();
-                updateDisplayedTime(busHandler.getLastUpdatedTime());
-                drawBuses(busHandler.getBuses());
-            } else {
-                Snackbar.make(view, "Information request for " + busesRequested + " sent over SMS. There may be several seconds of waiting.", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-                String formattedRequest = "Request: " + busesRequested;
-                requestHandler.sendSMS(formattedRequest);
-            }
+            return;
         }
+
+        if (!requestHandler.hasActiveInternetConnection()) {
+            Snackbar.make(view, "This device currently doesn't have an internet connection. " +
+                    "Please try again later.", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
+        }
+        if (!requestHandler.hasTranslinkAPI()) {
+            Snackbar.make(view, "Translink API currently not set.", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+            return;
+        }
+        Snackbar.make(view, "Request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
+                .setAction("Action", null).show();
+        requestHandler.updateWithInternet(handlerExtension);
+    }
+
+    // Takes the message from the Handler and updates the UI
+    public void updateDisplayedTimeAndDrawBuses(Message message) {
+        Bundle bundle = message.getData();
+        BusHandler busHandler = bundle.getParcelable("busHandler");
+        updateDisplayedTime(busHandler.getLastUpdatedTime());
+        drawBuses(busHandler.getBuses());
     }
 }
