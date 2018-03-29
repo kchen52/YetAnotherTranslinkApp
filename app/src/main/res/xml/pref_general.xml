@@ -1,21 +1,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="General Settings">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="useInternetIfAvailable"
-            android:summary="Uses the internet connection if available. If not, always use SMS."
-            android:title="Always use internet connection." />
-
-        <EditTextPreference
-            android:inputType="phone"
-            android:key="savedTwilioNumber"
-            android:maxLines="1"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:title="Twilio number"
-            android:summary="Sets the Twilio number to send texts to when using SMS."/>
-
         <EditTextPreference
             android:inputType="text"
             android:key="@string/translink_api"

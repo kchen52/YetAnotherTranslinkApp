@@ -1,17 +1,12 @@
 package com.kchen52.yetanothertranslinkapp;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.telephony.SmsMessage;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -45,14 +40,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private HandlerExtension handlerExtension;
 
     private GoogleMap mMap;
-    private BroadcastReceiver smsReceiver;
 
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
 
     private ArrayList<Marker> markers = new ArrayList<>();
 
-    private BusHandler busHandler;
     private RequestHandler requestHandler;
 
     private SharedPreferences sharedPref;
@@ -84,7 +77,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
 
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        busHandler = new BusHandler(getApplicationContext());
         requestHandler = new RequestHandler(getApplicationContext());
     }
 
@@ -142,15 +134,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        IntentFilter smsFilter = new IntentFilter();
-        smsFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
-        smsReceiver = new SMSReceiver();
-        registerReceiver(smsReceiver, smsFilter);
-
-        busHandler.updateWithLastText(requestHandler.getTwilioNumber());
-        drawBuses(busHandler.getBuses());
-        updateDisplayedTime(busHandler.getLastUpdatedTime());
-
         createRouteOverlays(requestHandler.getBusesRequested());
         centerCamera(
                 (double) sharedPref.getFloat("lastLat", 49.264566F),
@@ -162,8 +145,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (!busesRequested.equals("")) {
             // Clear the entire map
             mMap.clear();
-            // Draw buses
-            drawBuses(busHandler.getBuses());
             // Then create new layers and draw them
             for (String bus : busesRequested.split(", ")) {
                 KmlLayer kmlLayer;
@@ -181,35 +162,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
 
-    }
-
-    private class SMSReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final Bundle bundle = intent.getExtras();
-            try {
-                if (bundle != null) {
-                    final Object[] pdusObj = (Object[]) bundle.get("pdus");
-
-                    // Required because the following for loop doesn't go through the entire thing at once
-                    StringBuilder entireSMS = new StringBuilder();
-                    for (int i = 0; i < pdusObj.length; i++) {
-                        SmsMessage currentMessage = SmsMessage.createFromPdu((byte[]) pdusObj[i]);
-                        String phoneNumber = currentMessage.getDisplayOriginatingAddress();
-                        //Toast.makeText(context, "Number: " + phoneNumber, Toast.LENGTH_LONG).show();
-                        if (phoneNumber.equals(requestHandler.getTwilioNumber())) {
-                            String message = currentMessage.getDisplayMessageBody();
-                            entireSMS.append(message);
-                        }
-                    }
-                    updateDisplayedTime(new Date());
-                    busHandler.updateBuses(entireSMS.toString());
-                    drawBuses(busHandler.getBuses());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void updateDisplayedTime(Date currentTime) {

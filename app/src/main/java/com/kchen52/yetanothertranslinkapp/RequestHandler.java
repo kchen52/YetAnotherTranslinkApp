@@ -24,10 +24,8 @@ public class RequestHandler {
     private SharedPreferences sharedPref;
     private Context appContext;
 
-    private String TWILIO_NUMBER;
     private String TRANSLINK_API;
     private String busesRequested;
-    private boolean useInternetIfAvailable;
 
     public RequestHandler(Context applicationContext) {
         appContext = applicationContext;
@@ -37,29 +35,12 @@ public class RequestHandler {
 
     // Updates internal values from sharedPreferences
     public void update() {
-        TWILIO_NUMBER = sharedPref.getString(appContext.getString(R.string.saved_twilio_number), appContext.getString(R.string.saved_twilio_number_default));
         busesRequested = sharedPref.getString(appContext.getString(R.string.saved_buses_requested), appContext.getString(R.string.saved_buses_requested_default));
-        useInternetIfAvailable = sharedPref.getBoolean(appContext.getString(R.string.use_internet_if_available), true);
         TRANSLINK_API = sharedPref.getString(appContext.getString(R.string.translink_api), appContext.getString(R.string.translink_api_default));
     }
 
     public String getBusesRequested() {
         return busesRequested;
-    }
-
-    public String getTwilioNumber() {
-        return TWILIO_NUMBER;
-    }
-
-    public boolean getUseInternet() { return useInternetIfAvailable; }
-
-    public void sendSMS(String msg) {
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(TWILIO_NUMBER, null, msg, null, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public boolean hasTranslinkAPI() {
@@ -77,7 +58,7 @@ public class RequestHandler {
     // Previously returned a BusHandler, now pass it as a message to the UI thread to
     // prevent blocking
     public BusHandler updateWithInternet(final HandlerExtension handlerExtension) {
-        final BusHandler newBusHandler = new BusHandler(appContext);
+        final BusHandler newBusHandler = new BusHandler();
         final String[] buses = busesRequested.split(", ");
         if (buses.length == 0) { return newBusHandler; }
 

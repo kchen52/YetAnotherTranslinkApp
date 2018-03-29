@@ -2,7 +2,8 @@
 
 # Description
 
-Yet Another Translink App is an Android application that allows a user to track real-time locations of Translink buses. This can be done over the internet, or through SMS.
+Yet Another Translink App is an Android application that allows a user to track real-time locations of Translink buses. 
+There was previously SMS support, but has since been removed for simplicity.
 
 Currently a work in progress, will continue to update this README as the project continues.
 
@@ -17,11 +18,5 @@ Currently a work in progress, will continue to update this README as the project
 #### Permissions used:
 
 android.permission.ACCESS_FINE_LOCATION - For Google maps functionality
-
-android.permission.READ_SMS - Read last relevant incoming SMS message to populate the map with old values
-
-android.permission.RECEIVE_SMS - Intercept incoming SMS for information request without internet
-
-android.permission.SEND_SMS - Send information requests without internet
 
 android.permission.ACCESS_NETWORK_STATE - Allows us to check for an active internet connection, and to use that if possible to update information

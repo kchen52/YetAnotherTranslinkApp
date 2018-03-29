@@ -19,13 +19,9 @@ import java.util.regex.Pattern;
 public class BusHandler implements Parcelable {
     private LinkedList<Bus> buses;
     private Date lastUpdatedTime;
-    // TODO: Remove the following and its references
-    // Will not be used for much longer after we remove SMS capabilities
-    private Context appContext;
 
-    public BusHandler(Context applicationContext) {
+    public BusHandler() {
         buses = new LinkedList<>();
-        appContext = applicationContext;
     }
     public LinkedList<Bus> getBuses() {
         return buses;
@@ -36,12 +32,6 @@ public class BusHandler implements Parcelable {
     }
     public void setLastUpdatedTime(Date date) {
         lastUpdatedTime = date;
-    }
-
-    // Takes the incoming SMS message, parses it and saves the information in the buses linkedlist
-    public void updateBuses(String message) {
-        buses = parseMessage(message);
-        lastUpdatedTime = new Date();
     }
 
     private LinkedList<Bus> parseMessage(String input) {
@@ -80,52 +70,7 @@ public class BusHandler implements Parcelable {
         return lastUpdatedTime;
     }
 
-    public void updateWithLastText(String twilioNumber) {
-        String lastText = readLastYATAText(twilioNumber);
-        if (lastText != null && !"".equals(lastText)) {
-            // Provided it's not empty, parse the message, draw buses, and update last updated time
-            String unreadableDate = lastText.split("\\{")[0];
-            String bodyOfText = lastText.split("\\{")[1];
-            // Just to get rid of that last "}"
-            bodyOfText = bodyOfText.substring(0, bodyOfText.length()-1);
-            lastUpdatedTime = new Date(Long.parseLong(unreadableDate));
-            buses = parseMessage(bodyOfText);
-        } else {
-            lastUpdatedTime = null;
-        }
-    }
-
-    /*
-     * Returns a null string if a SecurityException (e.g., permissions issue) is thrown
-     *
-     */
-    private String readLastYATAText(String twilioNumber) {
-        // Reads the inbox for the last message sent from the server if it exists
-        String[] projection = new String[] { "_id", "address", "person", "body", "date", "type" };
-        try {
-            Cursor cursor = appContext.getContentResolver().query(Uri.parse("content://sms/inbox"), projection, "address=\'" + twilioNumber + "\'", null, "date desc limit 1");
-            StringBuilder builder = new StringBuilder();
-            if (cursor.moveToFirst()) {
-                int indexBody = cursor.getColumnIndex("body");
-                int indexDate = cursor.getColumnIndex("date");
-                builder.append(cursor.getString(indexDate));
-                builder.append("{");
-                builder.append(cursor.getString(indexBody));
-                builder.append("}");
-            }
-
-            if (!cursor.isClosed()) { cursor.close(); }
-            return builder.toString();
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } finally {
-            return null;
-        }
-
-    }
-
     // Parcelling methods
-
     @Override
     public int describeContents() {
         return 0;
