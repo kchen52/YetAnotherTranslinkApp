@@ -1,12 +1,4 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="General Settings">
-        <EditTextPreference
-            android:inputType="text"
-            android:key="@string/translink_api"
-            android:maxLines="1"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:title="Translink API"
-            android:summary="Translink API to use for bus updates."/>
     </PreferenceCategory>
 </PreferenceScreen>

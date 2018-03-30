@@ -58,13 +58,12 @@ public class RequestHandler {
 
     // Previously returned a BusHandler, now pass it as a message to the UI thread to
     // prevent blocking
-    public BusHandler updateWithInternet(final HandlerExtension handlerExtension) {
-        final BusHandler newBusHandler = new BusHandler();
-        final String[] buses = busesRequested.split(", ");
-        if (buses.length == 0) { return newBusHandler; }
-
+    public void updateWithInternet(final HandlerExtension handlerExtension) {
         Thread requestThread = new Thread() {
             public void run() {
+                final BusHandler newBusHandler = new BusHandler();
+                final String[] buses = busesRequested.split(", ");
+                if (buses.length == 0) { return; }
                 for (String bus : buses) {
                     try {
                         String busRequestURL = "http://api.translink.ca/rttiapi/v1/buses?apikey=" + TRANSLINK_API +
@@ -87,7 +86,6 @@ public class RequestHandler {
             }
         };
         requestThread.start();
-        return newBusHandler;
     }
 
     private void reportDone(HandlerExtension handlerExtension, BusHandler busHandler) {

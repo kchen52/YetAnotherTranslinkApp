@@ -224,7 +224,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerOptions temp = new MarkerOptions().position(busLocation)
                 .title(bus.getDestination()+  ": " + bus.getVehicleNumber());
 
-        //.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
         if ("west".equals(bus.getDirection().toLowerCase())) {
             temp.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp_west));
         } else if ("east".equals(bus.getDirection().toLowerCase())) {
@@ -254,13 +253,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .setAction("Action", null).show();
             return;
         }
-        if (!requestHandler.hasTranslinkAPI()) {
-            Snackbar.make(view, "Translink API currently not set.", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show();
-            return;
-        }
-        Snackbar.make(view, "Request for " + busesRequested + " sent.", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show();
         requestHandler.updateWithInternet(handlerExtension);
     }
 
