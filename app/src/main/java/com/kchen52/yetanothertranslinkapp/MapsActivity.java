@@ -18,6 +18,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -127,7 +128,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             default:
                 return super.onOptionsItemSelected(item);
         }
-
     }
 
     @Override
@@ -201,8 +201,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void addMarker(Bus bus) {
         LatLng busLocation = new LatLng(bus.getLatitude(), bus.getLongitude());
         MarkerOptions temp = new MarkerOptions().position(busLocation)
-                .title(bus.getDestination()+  ": " + bus.getVehicleNumber())
-                .icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
+                .title(bus.getDestination()+  ": " + bus.getVehicleNumber());
+
+                //.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
+        if ("west".equals(bus.getDirection().toLowerCase())) {
+            temp.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp_west));
+        } else if ("east".equals(bus.getDirection().toLowerCase())) {
+            temp.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp_east));
+        } else {
+            // And in the case it's a direction I can't parse, just show the default bus icon
+            temp.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
+
+        }
         markers.add(mMap.addMarker(temp));
     }
 

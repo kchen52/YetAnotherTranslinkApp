@@ -78,5 +78,8 @@ public class Bus {
     public double getLatitude() {
         return latitude;
     }
+    public String getDirection() {
+        return direction;
+    }
 
 }
