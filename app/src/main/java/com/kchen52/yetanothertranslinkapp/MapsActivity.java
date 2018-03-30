@@ -1,11 +1,17 @@
 package com.kchen52.yetanothertranslinkapp;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -18,29 +24,34 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.data.kml.KmlLayer;
+import com.kchen52.yetanothertranslinkapp.handlers.BusHandler;
+import com.kchen52.yetanothertranslinkapp.handlers.HandlerExtension;
+import com.kchen52.yetanothertranslinkapp.handlers.PermissionsHandler;
+import com.kchen52.yetanothertranslinkapp.handlers.RequestHandler;
 
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback,
+        GoogleMap.OnMyLocationClickListener, GoogleMap.OnMyLocationButtonClickListener {
     private final String TAG = "MapsActivity";
     private HandlerExtension handlerExtension;
 
     private GoogleMap mMap;
+    private int MY_LOCATION_REQUEST_CODE = 1;
 
     // Used for formatting time/date for display
     private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss MM/dd/yyyy");
@@ -77,6 +88,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         requestHandler = new RequestHandler(getApplicationContext());
     }
@@ -87,7 +99,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Note: calling this code in onStart so changes made to the sharedpreferences in the settings or bus list screen are
         // immediately applied once coming back to the maps activity. onStart is also called after onCreate, so this also covers
         // that case lol
-        // Read from SharedPreferences, and update TWILIO_NUMBER and busesRequested
         requestHandler.update();
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
         if (mMap != null) {
@@ -134,30 +145,40 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        createRouteOverlays(requestHandler.getBusesRequested());
         centerCamera(
                 (double) sharedPref.getFloat("lastLat", 49.264566F),
                 (double) sharedPref.getFloat("lastLong", -123.133253F),
                 sharedPref.getFloat("lastZoom", 10f));
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+        } else {
+            // Show rationale and request permission.
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            }, MY_LOCATION_REQUEST_CODE);
+        }
+        createRouteOverlays(requestHandler.getBusesRequested());
     }
 
     private void createRouteOverlays(String busesRequested) {
-        if (!busesRequested.equals("")) {
-            // Clear the entire map
-            mMap.clear();
-            // Then create new layers and draw them
-            for (String bus : busesRequested.split(", ")) {
-                KmlLayer kmlLayer;
-                try {
-                    int id = getResources().getIdentifier("raw/_" + bus.toLowerCase(), null, this.getPackageName());
-                    kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
-                    kmlLayer.addLayerToMap();
-                } catch (XmlPullParserException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
+        if ("".equals(busesRequested)) {
+            return;
+        }
+        // Clear the entire map
+        mMap.clear();
+        // Then create new layers and draw them
+        for (String bus : busesRequested.split(", ")) {
+            KmlLayer kmlLayer;
+            try {
+                int id = getResources().getIdentifier("raw/_" + bus.toLowerCase(), null, this.getPackageName());
+                kmlLayer = new KmlLayer(mMap, id, getApplicationContext());
+                kmlLayer.addLayerToMap();
+            } catch (XmlPullParserException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
         }
@@ -203,7 +224,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         MarkerOptions temp = new MarkerOptions().position(busLocation)
                 .title(bus.getDestination()+  ": " + bus.getVehicleNumber());
 
-                //.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
+        //.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp));
         if ("west".equals(bus.getDirection().toLowerCase())) {
             temp.icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_directions_bus_black_24dp_west));
         } else if ("east".equals(bus.getDirection().toLowerCase())) {
@@ -220,7 +241,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Displays a snackbar indicated what was done, then calls the action in RequestHandler
      */
     public void requestInformation(View view) {
-        // Create a snackbar to let the user know what was requested, if at all
         String busesRequested = requestHandler.getBusesRequested();
         if (busesRequested.equals("")) {
             Snackbar.make(view, "Please select at least one bus route to track.", Snackbar.LENGTH_LONG)
@@ -250,5 +270,28 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         BusHandler busHandler = bundle.getParcelable("busHandler");
         updateDisplayedTime(busHandler.getLastUpdatedTime());
         drawBuses(busHandler.getBuses());
+    }
+
+    @Override
+    public boolean onMyLocationButtonClick() {
+        return false;
+    }
+
+    @Override
+    public void onMyLocationClick(@NonNull Location location) {
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                           int[] grantResults) throws SecurityException {
+        if (requestCode == MY_LOCATION_REQUEST_CODE) {
+            if (permissions.length == 1 &&
+                    permissions[0] == Manifest.permission.ACCESS_FINE_LOCATION &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                mMap.setMyLocationEnabled(true);
+            } else {
+                // Permission was denied. Display an error message.
+            }
+        }
     }
 }

@@ -23,5 +23,8 @@ public class SettingsActivity extends Activity {
             addPreferencesFromResource(R.xml.pref_general);
         }
     }
+
+
+    // http://ns.translink.ca/gtfs/google_transit.zip
 }
 
