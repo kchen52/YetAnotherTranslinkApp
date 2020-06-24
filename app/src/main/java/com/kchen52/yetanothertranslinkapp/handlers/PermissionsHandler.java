@@ -1,11 +1,9 @@
 package com.kchen52.yetanothertranslinkapp.handlers;
 
 import android.app.Activity;
-import android.app.Application;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.util.Log;
 
 /**
