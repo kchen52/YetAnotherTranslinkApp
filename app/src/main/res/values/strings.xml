@@ -19,6 +19,7 @@
     <string name="title_activity_settings">Settings</string>
     <string name="translink_api">translinkApi</string>
     <string name="translink_api_default"></string>
+    <string name="refresh_bus_button_text">Refresh bus info</string>
 
 
 </resources>
