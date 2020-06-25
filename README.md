@@ -1,11 +1,11 @@
 # Yet Another Translink App
 
+## Project is currently undergoing a rewrite - check out the refactor branch for more details.
+
 # Description
 
 Yet Another Translink App is an Android application that allows a user to track real-time locations of Translink buses. 
 There was previously SMS support, but has since been removed for simplicity.
-
-Currently a work in progress, will continue to update this README as the project continues.
 
 # Screenshots
 
