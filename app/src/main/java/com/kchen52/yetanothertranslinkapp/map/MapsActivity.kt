@@ -22,20 +22,17 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.kchen52.yetanothertranslinkapp.BusListActivity
 import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.SettingsActivity
-import com.kchen52.yetanothertranslinkapp.handlers.RequestHandler
 import kotlinx.android.synthetic.main.activity_maps.*
 
 class MapsActivity :
     AppCompatActivity(),
     OnMapReadyCallback,
     MapsActivityView {
-    private val TAG = "MapsActivity"
     private var googleMap: GoogleMap? = null
     private val MY_LOCATION_REQUEST_CODE = 1
 
     private val viewModel = MapsActivityViewModel()
 
-    private var requestHandler: RequestHandler? = null
     private var sharedPref: SharedPreferences? = null
     override fun onPause() {
         if (googleMap != null) {
@@ -45,7 +42,7 @@ class MapsActivity :
             sharedPrefEditor.putFloat("lastLat", latLng.latitude.toFloat())
             sharedPrefEditor.putFloat("lastLong", latLng.longitude.toFloat())
             sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom)
-            sharedPrefEditor.commit()
+            sharedPrefEditor.apply()
         }
         super.onPause()
     }
@@ -53,14 +50,12 @@ class MapsActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
-        // handlerExtension = HandlerExtension(this)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment!!.getMapAsync(this)
         sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
-        requestHandler = RequestHandler(applicationContext)
 
         viewModel.state.subscribe { mapsActivityState ->
             render(mapsActivityState)
@@ -73,17 +68,12 @@ class MapsActivity :
 
     override fun onStart() {
         super.onStart()
-        // Note: calling this code in onStart so changes made to the sharedpreferences in the settings or bus list screen are
-        // immediately applied once coming back to the maps activity. onStart is also called after onCreate, so this also covers
-        // that case lol
-        requestHandler!!.update()
         // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
-        if (googleMap != null) {
-            // createRouteOverlays(requestHandler.getBusesRequested());
+        googleMap?.let {
             centerCamera(
-                sharedPref!!.getFloat("lastLat", 49.264566f).toDouble(),
-                sharedPref!!.getFloat("lastLong", -123.133253f).toDouble(),
-                sharedPref!!.getFloat("lastZoom", 10f))
+                sharedPref?.getFloat("lastLat", DEFAULT_LATITUDE_VALUE)?.toDouble() ?: DEFAULT_LATITUDE_VALUE.toDouble(),
+                sharedPref?.getFloat("lastLong", DEFAULT_LONGITUDE_VALUE)?.toDouble() ?: DEFAULT_LONGITUDE_VALUE.toDouble(),
+                sharedPref?.getFloat("lastZoom", DEFAULT_ZOOM_LEVEL) ?: DEFAULT_ZOOM_LEVEL)
         }
     }
 
@@ -100,7 +90,7 @@ class MapsActivity :
         sharedPrefEditor.putFloat("lastLat", latLng.latitude.toFloat())
         sharedPrefEditor.putFloat("lastLong", latLng.longitude.toFloat())
         sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom)
-        sharedPrefEditor.commit()
+        sharedPrefEditor.apply()
         return when (item.itemId) {
             R.id.bus_list -> {
                 val busListIntent = Intent(this, BusListActivity::class.java)
@@ -119,9 +109,9 @@ class MapsActivity :
     override fun onMapReady(googleMap: GoogleMap) {
         this.googleMap = googleMap
         centerCamera(
-            sharedPref!!.getFloat("lastLat", 49.264566f).toDouble(),
-            sharedPref!!.getFloat("lastLong", -123.133253f).toDouble(),
-            sharedPref!!.getFloat("lastZoom", 10f))
+            sharedPref!!.getFloat("lastLat", DEFAULT_LATITUDE_VALUE).toDouble(),
+            sharedPref!!.getFloat("lastLong", DEFAULT_LONGITUDE_VALUE).toDouble(),
+            sharedPref!!.getFloat("lastZoom", DEFAULT_ZOOM_LEVEL))
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
             this.googleMap!!.isMyLocationEnabled = true
@@ -191,5 +181,13 @@ class MapsActivity :
 
     fun renderError(exception: Exception) {
         loadingBusesProgressBar.visibility = View.GONE
+        // Make a toast or snackbar?
+    }
+
+    companion object {
+        private val DEFAULT_ZOOM_LEVEL = 10f
+        private val DEFAULT_LATITUDE_VALUE = 49.264566f
+        private val DEFAULT_LONGITUDE_VALUE = -123.133253f
+        private val TAG = "MapsActivity"
     }
 }
