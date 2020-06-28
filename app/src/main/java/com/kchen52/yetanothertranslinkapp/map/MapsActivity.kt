@@ -1,14 +1,15 @@
 package com.kchen52.yetanothertranslinkapp.map
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -24,56 +25,30 @@ import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.SettingsActivity
 import kotlinx.android.synthetic.main.activity_maps.*
 
-class MapsActivity :
-    AppCompatActivity(),
-    OnMapReadyCallback,
-    MapsActivityView {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
     private var googleMap: GoogleMap? = null
-    private val MY_LOCATION_REQUEST_CODE = 1
 
     private val viewModel = MapsActivityViewModel()
 
-    private var sharedPref: SharedPreferences? = null
-    override fun onPause() {
-        if (googleMap != null) {
-            val cameraPosition = googleMap!!.cameraPosition
-            val latLng = cameraPosition.target
-            val sharedPrefEditor = sharedPref!!.edit()
-            sharedPrefEditor.putFloat("lastLat", latLng.latitude.toFloat())
-            sharedPrefEditor.putFloat("lastLong", latLng.longitude.toFloat())
-            sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom)
-            sharedPrefEditor.apply()
-        }
-        super.onPause()
-    }
+    private lateinit var sharedPref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment?
-        mapFragment!!.getMapAsync(this)
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(this)
+        sharedPref = getSharedPreferences(MapConstants.SHARED_PREFS_NAME, Context.MODE_PRIVATE)
 
         viewModel.state.subscribe { mapsActivityState ->
             render(mapsActivityState)
         }
 
         refreshBusesButton.setOnClickListener {
-            viewModel.onIntent(MapsActivityIntents.LoadBuses)
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        // When the user chooses a new route in the bus list menu and returns to the main activity, draw that route
-        googleMap?.let {
-            centerCamera(
-                sharedPref?.getFloat("lastLat", DEFAULT_LATITUDE_VALUE)?.toDouble() ?: DEFAULT_LATITUDE_VALUE.toDouble(),
-                sharedPref?.getFloat("lastLong", DEFAULT_LONGITUDE_VALUE)?.toDouble() ?: DEFAULT_LONGITUDE_VALUE.toDouble(),
-                sharedPref?.getFloat("lastZoom", DEFAULT_ZOOM_LEVEL) ?: DEFAULT_ZOOM_LEVEL)
+            // Read buses from shared prefs
+            val requestedBuses = sharedPref.getString("requestedBuses", "")?.map { it.toInt() }?.toIntArray() ?: intArrayOf()
+            viewModel.onIntent(MapsActivityIntents.LoadBuses(requestedBuses))
         }
     }
 
@@ -84,13 +59,6 @@ class MapsActivity :
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val cameraPosition = googleMap!!.cameraPosition
-        val latLng = cameraPosition.target
-        val sharedPrefEditor = sharedPref!!.edit()
-        sharedPrefEditor.putFloat("lastLat", latLng.latitude.toFloat())
-        sharedPrefEditor.putFloat("lastLong", latLng.longitude.toFloat())
-        sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom)
-        sharedPrefEditor.apply()
         return when (item.itemId) {
             R.id.bus_list -> {
                 val busListIntent = Intent(this, BusListActivity::class.java)
@@ -108,35 +76,32 @@ class MapsActivity :
 
     override fun onMapReady(googleMap: GoogleMap) {
         this.googleMap = googleMap
-        centerCamera(
-            sharedPref!!.getFloat("lastLat", DEFAULT_LATITUDE_VALUE).toDouble(),
-            sharedPref!!.getFloat("lastLong", DEFAULT_LONGITUDE_VALUE).toDouble(),
-            sharedPref!!.getFloat("lastZoom", DEFAULT_ZOOM_LEVEL))
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED) {
-            this.googleMap!!.isMyLocationEnabled = true
+            this.googleMap?.isMyLocationEnabled = true
         } else {
             // Show rationale and request permission.
             ActivityCompat.requestPermissions(this, arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ), MY_LOCATION_REQUEST_CODE)
         }
+
+        centerCamera(
+            lat = sharedPref.getFloat("lastLat", MapConstants.DEFAULT_LATITUDE_VALUE),
+            long = sharedPref.getFloat("lastLong", MapConstants.DEFAULT_LONGITUDE_VALUE),
+            zoomLevel = sharedPref.getFloat("lastZoom", MapConstants.DEFAULT_ZOOM_LEVEL)
+        )
     }
 
-    private fun centerCamera(avgLat: Double, avgLong: Double, zoomLevel: Float) {
-        val newLocation = LatLng(avgLat, avgLong)
-        googleMap?.moveCamera(CameraUpdateFactory.newLatLng(newLocation))
-        googleMap?.animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel))
-    }
 
     @Throws(SecurityException::class)
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
                                             grantResults: IntArray) {
         if (requestCode == MY_LOCATION_REQUEST_CODE) {
             if (permissions.size == 1 && permissions[0] === Manifest.permission.ACCESS_FINE_LOCATION && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                googleMap!!.isMyLocationEnabled = true
+                googleMap?.isMyLocationEnabled = true
             } else {
-                // Permission was denied. Display an error message.
+                // TODO: Determine what should actually be done here. Display an error message?
             }
         }
     }
@@ -159,8 +124,19 @@ class MapsActivity :
     }
 
     fun renderDataState(dataState: MapsActivityState.DataState) {
+        // Unfortunately there's nothing we can do here :|
+        // TODO: Can we await the map being ready?
+        if (googleMap == null) {
+            return
+        }
+
         // Remove all existing markers first
         googleMap?.clear()
+
+        // Only perform a camera shift if we have nonnull values for long, lat, and zoom
+        if (dataState.latitude != null && dataState.longitude != null && dataState.zoom != null) {
+            centerCamera(dataState.latitude, dataState.longitude, dataState.zoom)
+        }
 
         loadingBusesProgressBar.visibility = View.GONE
         for (bus in dataState.buses) {
@@ -181,13 +157,36 @@ class MapsActivity :
 
     fun renderError(exception: Exception) {
         loadingBusesProgressBar.visibility = View.GONE
-        // Make a toast or snackbar?
+        Toast.makeText(this, exception.message, Toast.LENGTH_LONG).show()
     }
 
+    // Centres the Google Map object on the provided latitude, longitude, and at the zoom level
+    // provided.
+    private fun centerCamera(lat: Float, long: Float, zoomLevel: Float) {
+        googleMap?.run {
+            val newLocation = LatLng(lat.toDouble(), long.toDouble())
+            moveCamera(CameraUpdateFactory.newLatLng(newLocation))
+            animateCamera(CameraUpdateFactory.newLatLngZoom(newLocation, zoomLevel))
+        }
+    }
+
+    // Save the current camera position so we go back to it the next time we resume
+    override fun onPause() {
+        super.onPause()
+        googleMap?.let { googleMap ->
+            val cameraPosition = googleMap.cameraPosition
+            val latLng = cameraPosition.target
+            val sharedPrefEditor = sharedPref.edit()
+            sharedPrefEditor.putFloat("lastLat", latLng.latitude.toFloat())
+            sharedPrefEditor.putFloat("lastLong", latLng.longitude.toFloat())
+            sharedPrefEditor.putFloat("lastZoom", cameraPosition.zoom)
+            sharedPrefEditor.apply()
+        }
+    }
+
+
     companion object {
-        private val DEFAULT_ZOOM_LEVEL = 10f
-        private val DEFAULT_LATITUDE_VALUE = 49.264566f
-        private val DEFAULT_LONGITUDE_VALUE = -123.133253f
-        private val TAG = "MapsActivity"
+        private const val TAG = "MapsActivity"
+        private const val MY_LOCATION_REQUEST_CODE = 1
     }
 }
