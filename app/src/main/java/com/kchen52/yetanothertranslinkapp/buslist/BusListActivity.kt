@@ -1,8 +1,6 @@
 package com.kchen52.yetanothertranslinkapp.buslist
 
-import android.app.Activity
 import android.app.Service
-import android.content.Context
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -13,10 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.kchen52.yetanothertranslinkapp.BusListRecyclerViewAdapter
 import com.kchen52.yetanothertranslinkapp.R
-import com.kchen52.yetanothertranslinkapp.data.BusListBus
-import com.kchen52.yetanothertranslinkapp.map.MapConstants
-import com.kchen52.yetanothertranslinkapp.map.MapsActivityViewModel
-import com.kchen52.yetanothertranslinkapp.map.MapsActivityViewModelFactory
+import com.kchen52.yetanothertranslinkapp.data.BusRoute
 import kotlinx.android.synthetic.main.activity_bus_list.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -29,7 +24,7 @@ class BusListActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bus_list)
-        val busList = mutableListOf<BusListBus>()
+        val busList = mutableListOf<BusRoute>()
         busListRecyclerView.layoutManager = LinearLayoutManager(this)
         busListRecyclerView.adapter = BusListRecyclerViewAdapter(busList)
 

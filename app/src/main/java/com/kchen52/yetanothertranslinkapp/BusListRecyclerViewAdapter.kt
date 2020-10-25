@@ -3,12 +3,11 @@ package com.kchen52.yetanothertranslinkapp
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.CheckBox
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.kchen52.yetanothertranslinkapp.data.BusListBus
+import com.kchen52.yetanothertranslinkapp.data.BusRoute
 
-class BusListRecyclerViewAdapter(private val busList: List<BusListBus>) :
+class BusListRecyclerViewAdapter(private val busList: List<BusRoute>) :
     RecyclerView.Adapter<BusListRecyclerViewAdapter.BusListViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BusListViewHolder {
@@ -17,7 +16,7 @@ class BusListRecyclerViewAdapter(private val busList: List<BusListBus>) :
     }
 
     override fun onBindViewHolder(holder: BusListViewHolder, position: Int) {
-        val bus = busList.getOrNull(position) ?: BusListBus("Invalid data", false)
+        val bus = busList.getOrNull(position) ?: return
         holder.bind(bus)
     }
 
@@ -35,9 +34,9 @@ class BusListRecyclerViewAdapter(private val busList: List<BusListBus>) :
             checkBox = itemView.findViewById(R.id.busRowCheckBox)
         }
 
-        fun bind(busListBus: BusListBus) {
-            routeName?.text = busListBus.name
-            checkBox?.isChecked = busListBus.checked
+        fun bind(busRoute: BusRoute) {
+            routeName?.text = busRoute.getFullRouteName()
+            checkBox?.isChecked = busRoute.checked
         }
     }
 }
