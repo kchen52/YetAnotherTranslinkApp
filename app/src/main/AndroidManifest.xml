@@ -31,7 +31,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".BusListActivity"
+            android:name=".buslist.BusListActivity"
             android:label="@string/title_activity_bus_list">
         </activity>
 

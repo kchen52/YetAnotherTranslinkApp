@@ -1,4 +1,4 @@
-package com.kchen52.yetanothertranslinkapp;
+package com.kchen52.yetanothertranslinkapp.buslist;
 
 import android.app.Service;
 import android.content.Context;
@@ -16,6 +16,10 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.kchen52.yetanothertranslinkapp.CustomAdapter;
+import com.kchen52.yetanothertranslinkapp.Model;
+import com.kchen52.yetanothertranslinkapp.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,6 +125,7 @@ public class BusListActivity extends AppCompatActivity {
         return new Model(busNumberAndDestinations, checked);
     }
 
+    // TODO: Fetch bus list dynamically
     private String[] busDestinationList = {
             "002 - MACDONALD/DOWNTOWN",
             "003 - MAIN/DOWNTOWN",

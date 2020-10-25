@@ -7,7 +7,7 @@ public class Model {
     String name;
     int value;
 
-    Model(String name, int value) {
+    public Model(String name, int value) {
         this.name = name;
         this.value = value;
     }

@@ -3,12 +3,12 @@ package com.kchen52.yetanothertranslinkapp.handlers;
 import android.os.Handler;
 import android.os.Message;
 
-import com.kchen52.yetanothertranslinkapp.MapsActivity;
+
 
 import java.lang.ref.WeakReference;
 
 // For handling responses from the requestHandler
-public class HandlerExtension extends Handler {
+/*public class HandlerExtension extends Handler {
     private final String TAG = "HandlerExtension";
     private final WeakReference<MapsActivity> currentActivity;
 
@@ -23,4 +23,4 @@ public class HandlerExtension extends Handler {
             mapsActivity.updateDisplayedTimeAndDrawBuses(msg);
         }
     }
-}
+}*/
