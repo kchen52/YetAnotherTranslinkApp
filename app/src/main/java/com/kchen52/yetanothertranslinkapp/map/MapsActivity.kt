@@ -20,7 +20,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.kchen52.yetanothertranslinkapp.BusListActivity
+import com.kchen52.yetanothertranslinkapp.buslist.BusListActivity
 import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.SettingsActivity
 import kotlinx.android.synthetic.main.activity_maps.*
@@ -28,7 +28,7 @@ import kotlinx.android.synthetic.main.activity_maps.*
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
     private var googleMap: GoogleMap? = null
 
-    private val viewModel = MapsActivityViewModel()
+    private val viewModel = MapsActivityViewModel(applicationContext)
 
     private lateinit var sharedPref: SharedPreferences
 

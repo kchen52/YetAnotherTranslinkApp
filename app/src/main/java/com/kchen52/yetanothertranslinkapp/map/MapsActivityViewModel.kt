@@ -1,6 +1,8 @@
 package com.kchen52.yetanothertranslinkapp.map
 
+import android.content.Context
 import com.google.gson.GsonBuilder
+import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.network.HeaderInterceptor
 import com.kchen52.yetanothertranslinkapp.network.TranslinkApi
 import com.kchen52.yetanothertranslinkapp.network.TranslinkBusResponseBody
@@ -12,6 +14,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
 class MapsActivityViewModel(
+    private val context: Context,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default + Job())
 ) {
     private val okHttpClient = OkHttpClient.Builder().addInterceptor(HeaderInterceptor()).build()
@@ -65,6 +68,7 @@ class MapsActivityViewModel(
 
     suspend fun fetchBuses(buses: IntArray): TranslinkBusResponseBody? {
         return translinkApi.getBuses(
+            context.getString(R.string.translink_api_default),
             buses.joinToString()
         ).body()
     }
