@@ -30,14 +30,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".buslist.BusListActivity"
-            android:label="@string/title_activity_bus_list">
-        </activity>
+            android:label="@string/menu_bus_list" />
 
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
+            android:label="@string/title_activity_settings" />
 
     </application>
 

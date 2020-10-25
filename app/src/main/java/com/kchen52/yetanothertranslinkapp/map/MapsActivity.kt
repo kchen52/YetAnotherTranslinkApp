@@ -1,6 +1,7 @@
 package com.kchen52.yetanothertranslinkapp.map
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -10,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -24,11 +26,15 @@ import com.kchen52.yetanothertranslinkapp.buslist.BusListActivity
 import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.SettingsActivity
 import kotlinx.android.synthetic.main.activity_maps.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 
+@ExperimentalCoroutinesApi
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
     private var googleMap: GoogleMap? = null
 
-    private val viewModel = MapsActivityViewModel(applicationContext)
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + Job())
+    private val viewModel: MapsActivityViewModel by viewModels { MapsActivityViewModelFactory(applicationContext, coroutineScope) }
 
     private lateinit var sharedPref: SharedPreferences
 
@@ -41,8 +47,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
         mapFragment.getMapAsync(this)
         sharedPref = getSharedPreferences(MapConstants.SHARED_PREFS_NAME, Context.MODE_PRIVATE)
 
-        viewModel.state.subscribe { mapsActivityState ->
-            render(mapsActivityState)
+
+        coroutineScope.launch {
+            viewModel.getMapsActivityState().collect { mapsActivityState ->
+                withContext(Dispatchers.Main) {
+                    render(mapsActivityState)
+                }
+            }
         }
 
         refreshBusesButton.setOnClickListener {
@@ -123,7 +134,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
         }
     }
 
-    fun renderDataState(dataState: MapsActivityState.DataState) {
+    private fun renderDataState(dataState: MapsActivityState.DataState) {
         // Unfortunately there's nothing we can do here :|
         // TODO: Can we await the map being ready?
         if (googleMap == null) {
@@ -151,11 +162,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, MapsActivityView {
         lastRequestDateTextView.text = lastRequestTime
     }
 
-    fun renderLoading() {
+    private fun renderLoading() {
         loadingBusesProgressBar.visibility = View.VISIBLE
     }
 
-    fun renderError(exception: Exception) {
+    private fun renderError(exception: Exception) {
         loadingBusesProgressBar.visibility = View.GONE
         Toast.makeText(this, exception.message, Toast.LENGTH_LONG).show()
     }

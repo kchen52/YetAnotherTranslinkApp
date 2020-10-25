@@ -1,22 +1,25 @@
 package com.kchen52.yetanothertranslinkapp.map
 
 import android.content.Context
+import androidx.lifecycle.ViewModel
 import com.google.gson.GsonBuilder
 import com.kchen52.yetanothertranslinkapp.R
 import com.kchen52.yetanothertranslinkapp.network.HeaderInterceptor
 import com.kchen52.yetanothertranslinkapp.network.TranslinkApi
 import com.kchen52.yetanothertranslinkapp.network.TranslinkBusResponseBody
-import io.reactivex.subjects.BehaviorSubject
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
 
+@ExperimentalCoroutinesApi
 class MapsActivityViewModel(
     private val context: Context,
-    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Default + Job())
-) {
+    private val coroutineScope: CoroutineScope
+): ViewModel() {
     private val okHttpClient = OkHttpClient.Builder().addInterceptor(HeaderInterceptor()).build()
 
     private val retrofit = Retrofit.Builder()
@@ -26,7 +29,7 @@ class MapsActivityViewModel(
         .build()
     private val translinkApi = retrofit.create(TranslinkApi::class.java)
 
-    val state: BehaviorSubject<MapsActivityState> = BehaviorSubject.createDefault(
+    private val state: MutableStateFlow<MapsActivityState> = MutableStateFlow(
         MapsActivityState.DataState(
             TranslinkBusResponseBody(),
             "",
@@ -36,15 +39,19 @@ class MapsActivityViewModel(
         )
     )
 
+    fun getMapsActivityState(): StateFlow<MapsActivityState> {
+        return state
+    }
+
     fun onIntent(intent: MapsActivityIntents) {
         if (intent is MapsActivityIntents.LoadBuses) {
             if (intent.buses.isEmpty()) {
-                state.onNext(MapsActivityState.ErrorState(
-                    Exception("Please select at least one bus from the settings menu."))
+                state.value = MapsActivityState.ErrorState(
+                    Exception("Please select at least one bus from the settings menu.")
                 )
                 return
             }
-            state.onNext(MapsActivityState.LoadingState)
+            state.value = MapsActivityState.LoadingState
             // Start getting buses
             coroutineScope.launch {
                 val buses = try { fetchBuses(intent.buses) ?: TranslinkBusResponseBody()
@@ -52,15 +59,13 @@ class MapsActivityViewModel(
                     exception.printStackTrace()
                     TranslinkBusResponseBody()
                 }
-                state.onNext(
-                    // No camera change, pass null values for long, lat, and zoom
-                    MapsActivityState.DataState(
-                        buses,
-                        Calendar.getInstance().time.toString(),
-                        null,
-                        null,
-                        null
-                    )
+                // No camera change, pass null values for long, lat, and zoom
+                state.value = MapsActivityState.DataState(
+                    buses,
+                    Calendar.getInstance().time.toString(),
+                    null,
+                    null,
+                    null
                 )
             }
         }
